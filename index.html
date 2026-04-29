@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIPERDIN BBPK Jakarta - Vercel Edition</title>
+  
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    /* CSS Styles (Sama Persis seperti sebelumnya demi konsistensi UI) */
+    :root {
+      --primary: #2563eb; --primary-hover: #1d4ed8;
+      --success: #10b981; --success-hover: #059669;
+      --danger: #ef4444; --background: #f8fafc;
+      --surface: #ffffff; --text-main: #0f172a;
+      --text-muted: #64748b; --border: #e2e8f0;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --radius: 12px; --radius-sm: 8px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--background); color: var(--text-main); line-height: 1.5; }
+    
+    nav { background-color: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+    .logo { font-weight: 700; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+    .nav-tabs { display: flex; gap: 1rem; }
+    .tab-btn { background: none; border: none; padding: 0.5rem 1rem; font-size: 0.95rem; font-weight: 500; color: var(--text-muted); cursor: pointer; border-radius: var(--radius-sm); transition: all 0.2s; }
+    .tab-btn:hover { color: var(--primary); background-color: #eff6ff; }
+    .tab-btn.active { background-color: var(--primary); color: white; }
+    
+    .submenu-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .sub-tab-btn { background: none; border: none; padding: 0.5rem 1rem; font-size: 0.95rem; font-weight: 500; color: var(--text-muted); cursor: pointer; border-radius: var(--radius-sm); transition: all 0.2s; }
+    .sub-tab-btn.active { color: var(--primary); background-color: #eff6ff; border-bottom: 2px solid var(--primary); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+    
+    .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .card { background-color: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 2rem; margin-bottom: 2rem; }
+    .card-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; display: inline-flex; }
+    
+    .form-group { margin-bottom: 1.25rem; display: flex; flex-direction: column; }
+    .form-group label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .form-control { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.95rem; background-color: #f8fafc; }
+    .form-control:focus { outline: none; border-color: var(--primary); background-color: #fff; }
+    .section-title { font-size: 1.1rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px dashed var(--border); padding-bottom: 0.5rem; }
+    
+    .checklist-item { display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 1rem; background: #fafafa; }
+    .checklist-info { display: flex; align-items: center; gap: 1rem; flex: 1; }
+    .checklist-info i { font-size: 1.5rem; color: var(--text-muted); }
+    .check-title { font-weight: 600; font-size: 0.95rem; }
+    
+    .file-input-wrapper { position: relative; background: white; border: 1px dashed var(--primary); padding: 0.5rem 1rem; border-radius: var(--radius-sm); text-align: center; cursor: pointer; min-width: 200px; }
+    .file-input-wrapper:hover { background-color: #eff6ff; }
+    .file-input-wrapper input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .tag-wajib { font-size: 0.7rem; background: #fee2e2; color: #ef4444; padding: 2px 6px; border-radius: 4px; margin-left: 0.5rem; vertical-align: middle; }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; font-size: 0.95rem; font-weight: 600; border-radius: var(--radius-sm); border: none; cursor: pointer; transition: all 0.3s; }
+    .btn-submit { width: 100%; background-color: #cbd5e1; color: white; margin-top: 1rem; pointer-events: none; }
+    .btn-submit.ready { background-color: var(--success); pointer-events: auto; }
+    .btn-submit.ready:hover { background-color: var(--success-hover); transform: translateY(-1px); }
+    .btn-primary { background-color: var(--primary); color: white; }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th { background-color: #f1f5f9; font-weight: 600; }
+    td select, td input { padding: 0.4rem; border: 1px solid var(--border); border-radius: 4px; }
+    .badge { padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .badge-process { background-color: #fef3c7; color: #d97706; }
+    .badge-done { background-color: #d1fae5; color: #059669; }
+    
+    .flow-container { display: flex; justify-content: space-between; align-items: center; position: relative; margin-top: 2rem; }
+    .flow-container::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 2px; background-color: var(--border); z-index: 1; }
+    .flow-step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 16%; }
+    .step-circle { width: 32px; height: 32px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-muted); transition: all 0.3s; }
+    .flow-step.active .step-circle { border-color: var(--primary); background-color: var(--primary); color: white; }
+    .step-label { font-size: 0.75rem; font-weight: 500; text-align: center; color: var(--text-muted); }
+    .flow-step.active .step-label { color: var(--primary); font-weight: 600; }
+    
+    #viewAdmin, #viewPegawaiStatus { display: none; }
+    .search-box { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 999; display: none; align-items: center; justify-content: center; flex-direction: column; gap:1rem; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* Peringatan Kredensial Firebase */
+    .alert-setup { background-color: #fee2e2; border-left: 4px solid #ef4444; color: #991b1b; padding: 1rem; margin-bottom: 1.5rem; border-radius: 4px; font-weight: 500;}
+
+    @media print { nav, .no-print { display: none !important; } .container { margin: 0; max-width: 100%; } .card { box-shadow: none; border: 1px solid #000; } body { background: white; } }
+    @media (max-width: 768px) { .checklist-item { flex-direction: column; align-items: flex-start; gap: 1rem; } .file-input-wrapper { width: 100%; } .flow-container { flex-direction: column; gap: 1rem; align-items: flex-start; } .flow-container::before { width: 2px; height: 100%; left: 15px; top: 0; } .flow-step { flex-direction: row; width: 100%; } .step-label { text-align: left; } }
+  </style>
+
+  <!-- Skrip Modul Firebase (MDI) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+
+    // =========================================================================
+    // AWAS: PENTING! Masukkan Konfigurasi Firebase dari Project Console Anda!
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "ISI_API_KEY_ANDA_DISINI",
+      authDomain: "nama-project-anda.firebaseapp.com",
+      projectId: "nama-project-anda",
+      storageBucket: "nama-project-anda.appspot.com",
+      messagingSenderId: "ISI_SENDER_ID",
+      appId: "ISI_APP_ID"
+    };
+
+    // Peringatan interaktif bila koneksi belum di set
+    if(firebaseConfig.apiKey.includes("ISI_API")) {
+        document.getElementById('firebase-warning').style.display = 'block';
+    }
+
+    // Inisialisasi Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // Ekspos ke global window agar bisa dipanggil oleh onclick HTML klasik
+    window.submitDataToCloud = async function(formData, fileInputs) {
+      const timestamp = Date.now();
+      const idKlaim = "PD-" + Math.floor(Math.random() * 100000) + "-" + timestamp.toString().slice(-4);
+      
+      let tautanFils = {};
+
+      try {
+        // Upload File Satu-persatu ke Storage
+        for(let key in fileInputs) {
+            let file = fileInputs[key];
+            if(file) {
+                let namaFile = `${key}_${formData.nama.replace(/\s+/g,'_')}_${timestamp}_${file.name}`;
+                let storageRef = ref(storage, 'Upload_Dokumen_SIPERDIN/' + namaFile);
+                await uploadBytes(storageRef, file);
+                tautanFils[key] = await getDownloadURL(storageRef);
+            } else {
+                tautanFils[key] = "";
+            }
+        }
+
+        // Susun Data
+        const payload = {
+            idKlaim: idKlaim,
+            namaLengkap: formData.nama,
+            jabatan: formData.jabatan,
+            kegiatan: formData.kegiatan,
+            tujuan: formData.tujuan,
+            jumlahPeserta: formData.peserta,
+            linkST: tautanFils['st'] || "",
+            linkSPPD: tautanFils['sppd'] || "",
+            linkHotel: tautanFils['hotel'] || "",
+            linkTransport: tautanFils['transport'] || "",
+            statusKlaim: "PJ Keuangan",
+            nominalAdmin: "-",
+            timestamp: new Date().toISOString(),
+            searchName: formData.nama.toLowerCase().trim() // Untuk fitur Track
+        };
+
+        // Simpan Ke Firestore Database
+        await addDoc(collection(db, "KlaimDatas"), payload);
+        return { success: true };
+      } catch (error) {
+        console.error(error);
+        throw new Error(error.message);
+      }
+    }
+
+    // Fungsi Fetch Global
+    window.fetchAdminData = async function() {
+        const q = query(collection(db, "KlaimDatas"), orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
+        let results = [];
+        snapshot.forEach((doc) => {
+            let d = doc.data();
+            d.docId = doc.id; // Menyimpan ID dokumen database untuk UPDATE
+            results.push(d);
+        });
+        return results;
+    }
+
+    window.searchDataPegawaiFirebase = async function(namaTujuan) {
+        const strLower = namaTujuan.toLowerCase().trim();
+        // Cari keseluruhan data agar matching LIKE query (karena firestore tdk punya sintaks LIKE alami)
+        const q = query(collection(db, "KlaimDatas"), orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
+        let results = [];
+        snapshot.forEach((doc) => {
+            let data = doc.data();
+            if(data.searchName && data.searchName.includes(strLower)) {
+                results.push(data);
+            }
+        });
+        return { total: results.length, data: results };
+    }
+
+    window.firebaseUpdateStatus = async function(docId, newStatus, nominal) {
+      const dbRef = doc(db, "KlaimDatas", docId);
+      await updateDoc(dbRef, {
+          statusKlaim: newStatus,
+          nominalAdmin: nominal
+      });
+      return true;
+    }
+
+  </script>
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingDiv">
+    <div class="spinner"></div>
+    <div style="font-weight:600; color:var(--primary);">Sistem Sedang Memproses...</div>
+  </div>
+
+  <nav>
+    <div class="logo">
+      <i class="fa-solid fa-plane-departure"></i> SIPERDIN BBPK Jakarta
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchView('pegawai')" id="tabPegawai">Menu Pegawai</button>
+      <button class="tab-btn" onclick="switchView('admin')" id="tabAdmin">Menu Admin</button>
+    </div>
+  </nav>
+
+  <div class="container" id="mainContainer">
+    
+    <!-- PERINGATAN FIREBASE SETUP -->
+    <div class="alert-setup" id="firebase-warning" style="display:none;">
+      <i class="fa-solid fa-triangle-exclamation"></i> <strong>Sistem Database Terputus:</strong> Anda belum memasukkan Kredensial Firebase Config ke dalam script. Silakan edit kode HTML bagian atas dan masukkan config API dari console.firebase.google.com Anda agar aplikasi Vercel ini dapat menyimpan data kehidupan nyata!
+    </div>
+
+    <!-- MENU PEGAWAI -->
+    <div id="viewPegawaiWrapper">
+      <div class="submenu-tabs no-print">
+        <button class="sub-tab-btn active" onclick="switchSubMenu('form')" id="subForm">1. Form Pengajuan Klaim</button>
+        <button class="sub-tab-btn" onclick="switchSubMenu('status')" id="subStatus">2. Status Pengajuan Klaim</button>
+      </div>
+
+      <!-- Submenu 1: Form Pengajuan -->
+      <div id="viewPegawaiForm">
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-clipboard-user"></i> Pengajuan Klaim Perjalanan Dinas</div>
+          <form id="formKlaim">
+            
+            <div class="section-title">Isi Data Diri</div>
+            <div class="form-group">
+              <label>Nama Lengkap</label>
+              <input type="text" id="nama" class="form-control" placeholder="Masukkan nama..." oninput="checkFormValid()">
+            </div>
+            <div class="form-group">
+              <label>Jabatan</label>
+              <input type="text" id="jabatan" class="form-control" placeholder="Jabatan..." oninput="checkFormValid()">
+            </div>
+            <div class="form-group">
+              <label>Kegiatan</label>
+              <input type="text" id="kegiatan" class="form-control" placeholder="Nama Kegiatan..." oninput="checkFormValid()">
+            </div>
+            <div class="form-group">
+              <label>Tujuan</label>
+              <input type="text" id="tujuan" class="form-control" placeholder="Tujuan perjalanan..." oninput="checkFormValid()">
+            </div>
+            <div class="form-group">
+              <label>Jumlah Peserta</label>
+              <input type="number" id="peserta" class="form-control" min="1" value="1" oninput="checkFormValid()">
+            </div>
+
+            <div class="section-title">Ceklist Dokumen Unggahan</div>
+            
+            <div class="checklist-item">
+              <div class="checklist-info">
+                <i class="fa-solid fa-file-pdf"></i>
+                <div class="check-title">Surat Tugas <span class="tag-wajib">Wajib</span></div>
+              </div>
+              <div class="file-input-wrapper">
+                <span style="font-size: 0.85rem; color:var(--primary);" id="lbl-st"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                <input type="file" id="file_st" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-st'); checkFormValid()">
+              </div>
+            </div>
+
+            <div class="checklist-item">
+              <div class="checklist-info">
+                <i class="fa-solid fa-file-signature"></i>
+                <div class="check-title">SPD / SPPD <span class="tag-wajib">Wajib</span></div>
+              </div>
+              <div class="file-input-wrapper">
+                <span style="font-size: 0.85rem; color:var(--primary);" id="lbl-sppd"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                <input type="file" id="file_sppd" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-sppd'); checkFormValid()">
+              </div>
+            </div>
+
+            <div class="checklist-item">
+              <div class="checklist-info">
+                <i class="fa-solid fa-hotel"></i>
+                <div class="check-title">Kwitansi Hotel</div>
+              </div>
+              <div class="file-input-wrapper">
+                <span style="font-size: 0.85rem; color:var(--text-muted);" id="lbl-hotel"><i class="fa-solid fa-upload"></i> Unggah Dokumen (Opsional)</span>
+                <input type="file" id="file_hotel" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-hotel')">
+              </div>
+            </div>
+
+            <div class="checklist-item">
+              <div class="checklist-info">
+                <i class="fa-solid fa-car"></i>
+                <div class="check-title">Kwitansi Transportasi</div>
+              </div>
+              <div class="file-input-wrapper">
+                <span style="font-size: 0.85rem; color:var(--text-muted);" id="lbl-trans"><i class="fa-solid fa-upload"></i> Unggah Dokumen (Opsional)</span>
+                <input type="file" id="file_trans" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-trans')">
+              </div>
+            </div>
+
+            <button type="button" id="btnSubmit" class="btn btn-submit" onclick="confirmSubmit()"><i class="fa-solid fa-paper-plane"></i> Ajukan Klaim</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Submenu 2: Status Pengajuan Klaim -->
+      <div id="viewPegawaiStatus">
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Cek Status Pengajuan Anda</div>
+          <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:1rem;">Silakan cari menggunakan Nama Lengkap Anda untuk melihat status klaim yang pernah diajukan.</p>
+          
+          <div class="search-box">
+            <input type="text" id="searchNamaPgw" class="form-control" placeholder="Masukkan Nama Lengkap Anda...">
+            <button class="btn btn-primary" onclick="cariStatusPegawai()"><i class="fa-solid fa-search"></i> Cari Data</button>
+          </div>
+
+          <div id="statusResultArea" style="display:none;">
+            <div style="padding: 1rem; background-color:var(--primary); color:white; border-radius:var(--radius-sm); margin-bottom:1rem;">
+              <h3 id="resNama" style="margin-bottom:0.25rem;">Nama Pegawai</h3>
+              <p style="font-size:0.9rem; opacity:0.9;">Total Pengajuan Diklaim: <b id="resTotal">0</b> dokumen</p>
+            </div>
+
+            <div id="resList">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- /VIEW PEGAWAI WRAPPER -->
+
+    <!-- MENU ADMIN -->
+    <div id="viewAdmin">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-user-shield"></i> Panel Admin - Database Firebase Pengelolaan Klaim</div>
+        
+        <div style="background-color: #eff6ff; border: 1px dashed var(--primary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">
+          <i class="fa-solid fa-info-circle text-primary"></i> <b>Integrasi Vercel:</b> Secara otomatis terhubung dengan Firebase Realtime / Firestore. Semua unggahan juga diletakkan dalam *Firebase Storage*.
+        </div>
+
+        <div style="margin-bottom:1rem; display:flex; justify-content:space-between;" class="no-print">
+          <button class="btn btn-primary" onclick="loadAdminData()"><i class="fa-solid fa-rotate-right"></i> Refresh Data Keseluruhan</button>
+          <button class="btn" style="background:#475569; color:white;" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak PDF Laporan</button>
+        </div>
+        
+        <div class="table-responsive">
+          <table id="adminTable">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Pemohon</th>
+                <th>Kegiatan</th>
+                <th>Dokumen Masuk</th>
+                <th>Status / Progress Tahapan</th>
+                <th class="no-print">Action Status</th>
+                <th class="no-print">Nominal Klaim (Rp)</th>
+                <th class="no-print">Simpan Action</th>
+              </tr>
+            </thead>
+            <tbody id="adminTbody">
+              <tr><td colspan="8" style="text-align:center; padding:2rem;">Klik Refresh Data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <script>
+    const STATUS_FLOW = [
+      "PJ Keuangan", "Katim Keuangan", "PPK", 
+      "Tanda tangan pegawai", "Verifikator", "Bendahara pengeluaran", "Selesai"
+    ];
+
+    function switchView(tab) {
+      document.getElementById('viewPegawaiWrapper').style.display = tab === 'pegawai' ? 'block' : 'none';
+      document.getElementById('viewAdmin').style.display = tab === 'admin' ? 'block' : 'none';
+      
+      document.getElementById('tabPegawai').classList.toggle('active', tab === 'pegawai');
+      document.getElementById('tabAdmin').classList.toggle('active', tab === 'admin');
+      document.getElementById('mainContainer').style.maxWidth = tab === 'admin' ? '1200px' : '900px';
+
+      if(tab === 'admin') loadAdminData();
+    }
+
+    function switchSubMenu(sub) {
+      document.getElementById('viewPegawaiForm').style.display = sub === 'form' ? 'block' : 'none';
+      document.getElementById('viewPegawaiStatus').style.display = sub === 'status' ? 'block' : 'none';
+      document.getElementById('subForm').classList.toggle('active', sub === 'form');
+      document.getElementById('subStatus').classList.toggle('active', sub === 'status');
+    }
+
+    function updateFileName(input, labelId) {
+      const label = document.getElementById(labelId);
+      const isOptional = labelId === 'lbl-hotel' || labelId === 'lbl-trans';
+      const defaultText = isOptional ? `<i class="fa-solid fa-upload"></i> Unggah Dokumen (Opsional)` : `<i class="fa-solid fa-upload"></i> Unggah Dokumen`;
+      
+      if(input.files.length > 0) {
+        label.innerHTML = `<span style="font-weight:600;"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i> ${input.files[0].name}</span>`;
+      } else {
+        label.innerHTML = defaultText;
+      }
+    }
+
+    function checkFormValid() {
+      const btn = document.getElementById('btnSubmit');
+      const var1 = document.getElementById('nama').value.trim();
+      const var2 = document.getElementById('jabatan').value.trim();
+      const var3 = document.getElementById('kegiatan').value.trim();
+      const var4 = document.getElementById('tujuan').value.trim();
+      const st = document.getElementById('file_st').files.length > 0;
+      const sppd = document.getElementById('file_sppd').files.length > 0;
+
+      if(var1 && var2 && var3 && var4 && st && sppd) {
+        btn.classList.add('ready');
+      } else {
+        btn.classList.remove('ready');
+      }
+    }
+
+    function confirmSubmit() {
+      if(document.getElementById('firebase-warning').style.display === 'block') {
+         Swal.fire('Error Database', 'Admin Web Site belum mengatur Konfigurasi Firebase!', 'error');
+         return;
+      }
+
+      if(!document.getElementById('btnSubmit').classList.contains('ready')) return;
+      
+      Swal.fire({
+        title: 'Konfirmasi Pengajuan',
+        text: "Apakah anda akan melakukan pengajuan ke bagian keuangan?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Ajukan!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) executeSubmit();
+      });
+    }
+
+    async function executeSubmit() {
+      document.getElementById('loadingDiv').style.display = 'flex';
+      
+      const formData = {
+        nama: document.getElementById('nama').value,
+        jabatan: document.getElementById('jabatan').value,
+        kegiatan: document.getElementById('kegiatan').value,
+        tujuan: document.getElementById('tujuan').value,
+        peserta: document.getElementById('peserta').value
+      };
+
+      const files = {
+        st: document.getElementById('file_st').files[0],
+        sppd: document.getElementById('file_sppd').files[0],
+        hotel: document.getElementById('file_hotel').files[0],
+        transport: document.getElementById('file_trans').files[0]
+      };
+
+      try {
+        await window.submitDataToCloud(formData, files);
+        
+        document.getElementById('loadingDiv').style.display = 'none';
+        Swal.fire({
+            title: 'Berhasil!', 
+            text: 'Terima kasih, pengajuan sedang diproses, mohon ditunggu ya :).', 
+            icon: 'success'
+        }).then(() => {
+            document.getElementById('formKlaim').reset();
+            ['lbl-st', 'lbl-sppd', 'lbl-hotel', 'lbl-trans'].forEach(id => {
+                let text = (id==='lbl-hotel' || id==='lbl-trans') ? '(Opsional)' : '';
+                document.getElementById(id).innerHTML = `<i class="fa-solid fa-upload"></i> Unggah Dokumen ${text}`;
+            });
+            checkFormValid();
+            switchSubMenu('status');
+            document.getElementById('searchNamaPgw').value = formData.nama;
+            cariStatusPegawai();
+        });
+
+      } catch (e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        Swal.fire('Error', 'Gagal menyimpan dan upload data ke Database: ' + e.message, 'error');
+      }
+    }
+
+    // --- SEARCH KLAIM PEGAWAI LOGIC ---
+    async function cariStatusPegawai() {
+      const nama = document.getElementById('searchNamaPgw').value.trim();
+      if(!nama) {
+        Swal.fire('Masukkan Nama', 'Harap isi nama Anda untuk mencari.', 'warning');
+        return;
+      }
+      if(!window.searchDataPegawaiFirebase) return; // if init failed
+
+      document.getElementById('loadingDiv').style.display = 'flex';
+      
+      try {
+          const response = await window.searchDataPegawaiFirebase(nama);
+          renderStatusRiwayat(response);
+      } catch (e) {
+          document.getElementById('loadingDiv').style.display = 'none';
+          Swal.fire('Error', 'Gagal memanggil database.', 'error');
+      }
+    }
+
+    function renderStatusRiwayat(response) {
+      document.getElementById('loadingDiv').style.display = 'none';
+      const area = document.getElementById('statusResultArea');
+      const list = document.getElementById('resList');
+      
+      area.style.display = 'block';
+      document.getElementById('resNama').innerText = document.getElementById('searchNamaPgw').value;
+      document.getElementById('resTotal').innerText = response.total;
+
+      list.innerHTML = '';
+      if(response.total === 0) {
+        list.innerHTML = `<div style="text-align:center; padding: 2rem; border:1px dashed var(--border); border-radius:8px; color:var(--text-muted);">Tidak ada pengajuan klaim ditemukan untuk nama tersebut.</div>`;
+        return;
+      }
+
+      response.data.forEach(item => {
+        let dateObj = new Date(item.timestamp);
+        let tgl = isNaN(dateObj) ? item.timestamp : dateObj.toLocaleDateString('id-ID');
+        let statusBaru = item.statusKlaim || "PJ Keuangan";
+        let nominal = item.nominalAdmin || "-";
+        
+        let currIdx = STATUS_FLOW.indexOf(statusBaru);
+        if(statusBaru.toLowerCase().includes('revisi')) currIdx = -1;
+
+        let flowHtml = '';
+        STATUS_FLOW.forEach((stepName, idx) => {
+          let activeClass = idx <= currIdx ? 'active' : '';
+          flowHtml += `<div class="flow-step ${activeClass}"><div class="step-circle"><i class="fa-solid fa-check"></i></div><div class="step-label">${stepName}</div></div>`;
+        });
+
+        let card = document.createElement('div');
+        card.style.cssText = "border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;";
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
+            <div>
+              <div style="font-size:0.85rem; color:var(--text-muted);">#ID: ${item.idKlaim} &bull; ${tgl}</div>
+              <h4 style="margin-top:0.2rem; color:var(--text-main);">${item.kegiatan} - ${item.tujuan}</h4>
+            </div>
+            <div style="text-align:right;">
+             <span class="badge ${currIdx===-1 ? 'bg-danger' : 'badge-process'}">${statusBaru}</span>
+             <div style="margin-top:0.5rem; font-size:0.9rem;">Nominal Disetujui: <strong style="color:var(--success);">Rp ${nominal}</strong></div>
+            </div>
+          </div>
+          <div class="flow-container" style="margin-top:1rem;">
+            ${flowHtml}
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    // --- ADMIN LOGIC --- //
+    async function loadAdminData(){
+      if(!window.fetchAdminData) return;
+      document.getElementById('loadingDiv').style.display = 'flex';
+
+      try {
+          const data = await window.fetchAdminData();
+          renderAdminTable(data);
+      } catch (e) {
+          document.getElementById('loadingDiv').style.display = 'none';
+          alert('Gagal mengambil data dari Database Server: ' + e.message);
+      }
+    }
+
+    function renderAdminTable(data) {
+      document.getElementById('loadingDiv').style.display = 'none';
+      const tbody = document.getElementById('adminTbody');
+      tbody.innerHTML = '';
+      
+      if(!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Belum ada data pengajuan</td></tr>';
+        return;
+      }
+
+      data.forEach(item => {
+        let tr = document.createElement('tr');
+        
+        let dateObj = new Date(item.timestamp);
+        let tgl = isNaN(dateObj) ? item.timestamp : dateObj.toLocaleDateString('id-ID');
+
+        let links = '';
+        if(item.linkST) links += `<a href="${item.linkST}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-pdf"></i> Lihat ST</a>`;
+        if(item.linkSPPD) links += `<a href="${item.linkSPPD}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-signature"></i> Lihat SPPD</a>`;
+        if(item.linkHotel) links += `<a href="${item.linkHotel}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-hotel"></i> Lihat Hotel</a>`;
+        if(item.linkTransport) links += `<a href="${item.linkTransport}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block;"><i class="fa-solid fa-car"></i> Lihat Transport</a>`;
+
+        let currStat = item.statusKlaim || "PJ Keuangan";
+        let optHtml = `<option value="Revisi Data/Berkas Ditolak">Revisi / Tolak</option>`;
+        STATUS_FLOW.forEach(s => {
+          let sel = (s === currStat) ? "selected" : "";
+          optHtml += `<option value="${s}" ${sel}>${s}</option>`;
+        });
+
+        tr.innerHTML = `
+          <td>${tgl}</td>
+          <td><b>${item.namaLengkap}</b><br><span style="font-size:0.8rem; color:#64748b;">${item.jabatan}</span></td>
+          <td>${item.kegiatan} - ${item.tujuan}</td>
+          <td>${links}</td>
+          <td><span class="badge badge-process">${currStat}</span></td>
+          <td class="no-print"><select id="sel_${item.docId}" class="form-control" style="width:160px; padding:0.2rem;">${optHtml}</select></td>
+          <td class="no-print"><input type="number" id="nom_${item.docId}" value="${item.nominalAdmin == '-' ? '' : item.nominalAdmin}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
+          <td class="no-print"><button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="simpanRow('${item.docId}')"><i class="fa-solid fa-save"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function simpanRow(docId) {
+      document.getElementById('loadingDiv').style.display = 'flex';
+      const nStat = document.getElementById('sel_' + docId).value;
+      const nNom = document.getElementById('nom_' + docId).value;
+
+      try {
+          await window.firebaseUpdateStatus(docId, nStat, nNom);
+          Swal.fire('Tersimpan', 'Status clan Nominal berhasil diperbarui di Cloud Database.', 'success');
+          loadAdminData();
+      } catch (e) {
+          document.getElementById('loadingDiv').style.display = 'none';
+          Swal.fire('Gusar', 'Gagal menyimpan update.', 'error');
+      }
+    }
+
+    switchSubMenu('form');
+  </script>
+</body>
+</html>
