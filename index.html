@@ -390,7 +390,51 @@
       "Tanda tangan pegawai", "Verifikator", "Bendahara pengeluaran", "Selesai"
     ];
 
+    let isAdminLoggedIn = false;
+
     function switchView(tab) {
+      if (tab === 'admin' && !isAdminLoggedIn) {
+        Swal.fire({
+          title: 'Login Admin',
+          html:
+            '<input id="swal-user" class="swal2-input" placeholder="Username">' +
+            '<input id="swal-pass" class="swal2-input" type="password" placeholder="Password">',
+          focusConfirm: false,
+          showCancelButton: true,
+          confirmButtonText: 'Login',
+          cancelButtonText: 'Batal',
+          preConfirm: () => {
+            const user = document.getElementById('swal-user').value;
+            const pass = document.getElementById('swal-pass').value;
+            if (!user || !pass) {
+              Swal.showValidationMessage('Silakan masukkan username dan password');
+            }
+            return { user, pass };
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            if (result.value.user === 'admin' && result.value.pass === 'keuangan123') {
+              isAdminLoggedIn = true;
+              Swal.fire({
+                title: 'Berhasil',
+                text: 'Login berhasil!',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+              });
+              executeSwitchView('admin');
+            } else {
+              Swal.fire('Akses Ditolak', 'Username atau password salah!', 'error');
+            }
+          }
+        });
+        return;
+      }
+      
+      executeSwitchView(tab);
+    }
+
+    function executeSwitchView(tab) {
       document.getElementById('viewPegawaiWrapper').style.display = tab === 'pegawai' ? 'block' : 'none';
       document.getElementById('viewAdmin').style.display = tab === 'admin' ? 'block' : 'none';
       
