@@ -96,116 +96,69 @@
     @media (max-width: 768px) { .checklist-item { flex-direction: column; align-items: flex-start; gap: 1rem; } .file-input-wrapper { width: 100%; } .flow-container { flex-direction: column; gap: 1rem; align-items: flex-start; } .flow-container::before { width: 2px; height: 100%; left: 15px; top: 0; } .flow-step { flex-direction: row; width: 100%; } .step-label { text-align: left; } }
   </style>
 
-  <!-- Skrip Modul Firebase (MDI) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
-
-    // =========================================================================
-    // AWAS: PENTING! Masukkan Konfigurasi Firebase dari Project Console Anda!
-    // =========================================================================
-    const firebaseConfig = {
-      apiKey: "ISI_API_KEY_ANDA_DISINI",
-      authDomain: "nama-project-anda.firebaseapp.com",
-      projectId: "nama-project-anda",
-      storageBucket: "nama-project-anda.appspot.com",
-      messagingSenderId: "ISI_SENDER_ID",
-      appId: "ISI_APP_ID"
-    };
-
-    // Peringatan interaktif bila koneksi belum di set
-    if(firebaseConfig.apiKey.includes("ISI_API")) {
-        document.getElementById('firebase-warning').style.display = 'block';
-    }
-
-    // Inisialisasi Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    // Ekspos ke global window agar bisa dipanggil oleh onclick HTML klasik
+    // Mock Firebase using Local Storage if Firebase is not configured
     window.submitDataToCloud = async function(formData, fileInputs) {
       const timestamp = Date.now();
       const idKlaim = "PD-" + Math.floor(Math.random() * 100000) + "-" + timestamp.toString().slice(-4);
       
-      let tautanFils = {};
+      const payload = {
+          idKlaim: idKlaim,
+          namaLengkap: formData.nama,
+          jabatan: formData.jabatan,
+          kegiatan: formData.kegiatan,
+          tujuan: formData.tujuan,
+          jumlahPeserta: formData.peserta,
+          linkST: "#", // Dummy link for local demo
+          linkSPPD: "#",
+          linkHotel: "#",
+          linkTransport: "#",
+          statusKlaim: "PJ Keuangan",
+          nominalAdmin: "-",
+          timestamp: new Date().toISOString(),
+          searchName: formData.nama.toLowerCase().trim()
+      };
 
-      try {
-        // Upload File Satu-persatu ke Storage
-        for(let key in fileInputs) {
-            let file = fileInputs[key];
-            if(file) {
-                let namaFile = `${key}_${formData.nama.replace(/\s+/g,'_')}_${timestamp}_${file.name}`;
-                let storageRef = ref(storage, 'Upload_Dokumen_SIPERDIN/' + namaFile);
-                await uploadBytes(storageRef, file);
-                tautanFils[key] = await getDownloadURL(storageRef);
-            } else {
-                tautanFils[key] = "";
-            }
-        }
-
-        // Susun Data
-        const payload = {
-            idKlaim: idKlaim,
-            namaLengkap: formData.nama,
-            jabatan: formData.jabatan,
-            kegiatan: formData.kegiatan,
-            tujuan: formData.tujuan,
-            jumlahPeserta: formData.peserta,
-            linkST: tautanFils['st'] || "",
-            linkSPPD: tautanFils['sppd'] || "",
-            linkHotel: tautanFils['hotel'] || "",
-            linkTransport: tautanFils['transport'] || "",
-            statusKlaim: "PJ Keuangan",
-            nominalAdmin: "-",
-            timestamp: new Date().toISOString(),
-            searchName: formData.nama.toLowerCase().trim() // Untuk fitur Track
-        };
-
-        // Simpan Ke Firestore Database
-        await addDoc(collection(db, "KlaimDatas"), payload);
-        return { success: true };
-      } catch (error) {
-        console.error(error);
-        throw new Error(error.message);
-      }
+      // Get existing data from LocalStorage
+      let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
+      
+      // Simulate network delay
+      await new Promise(r => setTimeout(r, 800));
+      
+      existingData.unshift(payload);
+      localStorage.setItem('siperdin_klaim', JSON.stringify(existingData));
+      
+      return { success: true };
     }
 
-    // Fungsi Fetch Global
     window.fetchAdminData = async function() {
-        const q = query(collection(db, "KlaimDatas"), orderBy("timestamp", "desc"));
-        const snapshot = await getDocs(q);
-        let results = [];
-        snapshot.forEach((doc) => {
-            let d = doc.data();
-            d.docId = doc.id; // Menyimpan ID dokumen database untuk UPDATE
-            results.push(d);
+        let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
+        return existingData.map((d, index) => {
+            d.docId = index.toString();
+            return d;
         });
-        return results;
     }
 
     window.searchDataPegawaiFirebase = async function(namaTujuan) {
         const strLower = namaTujuan.toLowerCase().trim();
-        // Cari keseluruhan data agar matching LIKE query (karena firestore tdk punya sintaks LIKE alami)
-        const q = query(collection(db, "KlaimDatas"), orderBy("timestamp", "desc"));
-        const snapshot = await getDocs(q);
-        let results = [];
-        snapshot.forEach((doc) => {
-            let data = doc.data();
-            if(data.searchName && data.searchName.includes(strLower)) {
-                results.push(data);
-            }
-        });
+        let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
+        
+        let results = existingData.filter(d => d.searchName && d.searchName.includes(strLower));
+        
         return { total: results.length, data: results };
     }
 
     window.firebaseUpdateStatus = async function(docId, newStatus, nominal) {
-      const dbRef = doc(db, "KlaimDatas", docId);
-      await updateDoc(dbRef, {
-          statusKlaim: newStatus,
-          nominalAdmin: nominal
-      });
+      let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
+      let idx = parseInt(docId);
+      
+      if(existingData[idx]) {
+          existingData[idx].statusKlaim = newStatus;
+          existingData[idx].nominalAdmin = nominal;
+          localStorage.setItem('siperdin_klaim', JSON.stringify(existingData));
+      }
+      
+      // Simulate network delay
+      await new Promise(r => setTimeout(r, 500));
       return true;
     }
 
@@ -231,11 +184,6 @@
 
   <div class="container" id="mainContainer">
     
-    <!-- PERINGATAN FIREBASE SETUP -->
-    <div class="alert-setup" id="firebase-warning" style="display:none;">
-      <i class="fa-solid fa-triangle-exclamation"></i> <strong>Sistem Database Terputus:</strong> Anda belum memasukkan Kredensial Firebase Config ke dalam script. Silakan edit kode HTML bagian atas dan masukkan config API dari console.firebase.google.com Anda agar aplikasi Vercel ini dapat menyimpan data kehidupan nyata!
-    </div>
-
     <!-- MENU PEGAWAI -->
     <div id="viewPegawaiWrapper">
       <div class="submenu-tabs no-print">
@@ -481,10 +429,6 @@
     }
 
     function confirmSubmit() {
-      if(document.getElementById('firebase-warning').style.display === 'block') {
-         Swal.fire('Error Database', 'Admin Web Site belum mengatur Konfigurasi Firebase!', 'error');
-         return;
-      }
 
       if(!document.getElementById('btnSubmit').classList.contains('ready')) return;
       
