@@ -96,8 +96,28 @@
     @media (max-width: 768px) { .checklist-item { flex-direction: column; align-items: flex-start; gap: 1rem; } .file-input-wrapper { width: 100%; } .flow-container { flex-direction: column; gap: 1rem; align-items: flex-start; } .flow-container::before { width: 2px; height: 100%; left: 15px; top: 0; } .flow-step { flex-direction: row; width: 100%; } .step-label { text-align: left; } }
   </style>
 
-    // Mock Firebase using Local Storage if Firebase is not configured
+    // Integrasi Google Sheets (Apps Script)
+    const GOOGLE_SCRIPT_URL = "ISI_URL_WEB_APP_GOOGLE_SHEETS_DISINI";
+
+    // Helper untuk konversi File ke Base64 (agar bisa dikirim via JSON ke Google Drive)
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
+          if ((encoded.length % 4) > 0) {
+            encoded += '='.repeat(4 - (encoded.length % 4));
+          }
+          resolve(encoded);
+        };
+        reader.onerror = error => reject(error);
+      });
+    }
+
     window.submitDataToCloud = async function(formData, fileInputs) {
+      if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) throw new Error("Link Google Sheets Apps Script belum diisi oleh Admin!");
+
       const timestamp = Date.now();
       const idKlaim = "PD-" + Math.floor(Math.random() * 100000) + "-" + timestamp.toString().slice(-4);
       
@@ -108,57 +128,58 @@
           kegiatan: formData.kegiatan,
           tujuan: formData.tujuan,
           jumlahPeserta: formData.peserta,
-          linkST: "#", // Dummy link for local demo
-          linkSPPD: "#",
-          linkHotel: "#",
-          linkTransport: "#",
           statusKlaim: "PJ Keuangan",
           nominalAdmin: "-",
           timestamp: new Date().toISOString(),
           searchName: formData.nama.toLowerCase().trim()
       };
 
-      // Get existing data from LocalStorage
-      let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
+      let filesBase64 = {};
+      for(let key in fileInputs) {
+          if(fileInputs[key]) {
+              filesBase64[key] = {
+                  name: fileInputs[key].name,
+                  mimeType: fileInputs[key].type,
+                  base64: await toBase64(fileInputs[key])
+              };
+          }
+      }
+
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+          redirect: "follow",
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: "insert", payload: payload, files: filesBase64 })
+      });
       
-      // Simulate network delay
-      await new Promise(r => setTimeout(r, 800));
-      
-      existingData.unshift(payload);
-      localStorage.setItem('siperdin_klaim', JSON.stringify(existingData));
-      
+      const result = await response.json();
+      if(result.error) throw new Error(result.error);
       return { success: true };
     }
 
     window.fetchAdminData = async function() {
-        let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
-        return existingData.map((d, index) => {
-            d.docId = index.toString();
-            return d;
-        });
+        if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) return [];
+        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getAll");
+        return await res.json();
     }
 
     window.searchDataPegawaiFirebase = async function(namaTujuan) {
-        const strLower = namaTujuan.toLowerCase().trim();
-        let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
-        
-        let results = existingData.filter(d => d.searchName && d.searchName.includes(strLower));
-        
-        return { total: results.length, data: results };
+        if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) return {total: 0, data: []};
+        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=search&nama=" + encodeURIComponent(namaTujuan));
+        return await res.json();
     }
 
     window.firebaseUpdateStatus = async function(docId, newStatus, nominal) {
-      let existingData = JSON.parse(localStorage.getItem('siperdin_klaim') || '[]');
-      let idx = parseInt(docId);
+      if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) throw new Error("Link Google Sheets Apps Script belum diisi!");
       
-      if(existingData[idx]) {
-          existingData[idx].statusKlaim = newStatus;
-          existingData[idx].nominalAdmin = nominal;
-          localStorage.setItem('siperdin_klaim', JSON.stringify(existingData));
-      }
-      
-      // Simulate network delay
-      await new Promise(r => setTimeout(r, 500));
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+          redirect: "follow",
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: "update", docId: docId, statusKlaim: newStatus, nominalAdmin: nominal })
+      });
+      const result = await response.json();
+      if(result.error) throw new Error(result.error);
       return true;
     }
 
