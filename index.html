@@ -556,6 +556,13 @@
       }
     }
 
+    function formatRupiah(angka) {
+      if (!angka || angka === '-' || angka === '') return '-';
+      const num = parseFloat(String(angka).replace(/[^0-9]/g, ''));
+      if (isNaN(num)) return '-';
+      return new Intl.NumberFormat('id-ID').format(num);
+    }
+
     function renderStatusRiwayat(response) {
       document.getElementById('loadingDiv').style.display = 'none';
       const area = document.getElementById('statusResultArea');
@@ -577,6 +584,8 @@
         let tgl = isNaN(dateObj) ? item.timestamp : dateObj.toLocaleDateString('id-ID');
         let statusBaru = item.statusKlaim || "PJ Keuangan";
         let nominal = item.nominalAdmin || "-";
+        let catatanRevisi = item.catatanRevisi || item['Catatan Revisi'] || '';
+        let nominalFormatted = formatRupiah(nominal);
         
         let currIdx = STATUS_FLOW.indexOf(statusBaru);
         if(statusBaru.toLowerCase().includes('revisi')) currIdx = -1;
@@ -601,7 +610,7 @@
                 ? `<span style="font-size:1rem; font-weight:700; color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> Revisi Data / Berkas Ditolak</span>`
                 : `<span class="badge badge-process">${statusBaru}</span>`
               }
-             <div style="margin-top:0.5rem; font-size:0.9rem;">Nominal Disetujui: <strong style="color:var(--success);">Rp ${nominal}</strong></div>
+             <div style="margin-top:0.5rem; font-size:0.9rem;">Nominal Disetujui: <strong style="color:var(--success);">Rp ${nominalFormatted}</strong></div>
             </div>
           </div>
           <div class="flow-container" style="margin-top:1rem;">
@@ -610,7 +619,7 @@
           ${currIdx === -1 ? `
             <div style="margin-top:1.25rem; background:#fee2e2; border-left:5px solid #ef4444; padding:1rem 1.25rem; border-radius:6px;">
               <div style="font-size:1rem; font-weight:700; color:#991b1b; margin-bottom:0.5rem;"><i class="fa-solid fa-circle-exclamation"></i> Alasan Revisi / Penolakan:</div>
-              <div style="font-size:0.95rem; color:#7f1d1d;">${item.catatanRevisi && item.catatanRevisi.trim() !== '' ? item.catatanRevisi : '<em>Belum ada catatan dari Admin. Silakan hubungi bagian keuangan untuk informasi lebih lanjut.</em>'}</div>
+              <div style="font-size:0.95rem; color:#7f1d1d;">${catatanRevisi.trim() !== '' ? catatanRevisi : '<em>Belum ada catatan dari Admin. Silakan hubungi bagian keuangan untuk informasi lebih lanjut.</em>'}</div>
             </div>` : ''}
         `;
         list.appendChild(card);
