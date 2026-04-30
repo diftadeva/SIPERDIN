@@ -170,14 +170,14 @@
         return await res.json();
     }
 
-    window.firebaseUpdateStatus = async function(docId, newStatus, nominal, catatanRevisi) {
+    window.firebaseUpdateStatus = async function(docId, encodedStatus, nominal) {
       if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) throw new Error("Link Google Sheets Apps Script belum diisi!");
       
       const response = await fetch(GOOGLE_SCRIPT_URL, {
           redirect: "follow",
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: "update", docId: docId, statusKlaim: newStatus, nominalAdmin: nominal, catatanRevisi: catatanRevisi || '' })
+          body: JSON.stringify({ action: "update", docId: docId, statusKlaim: encodedStatus, nominalAdmin: nominal })
       });
       const result = await response.json();
       if(result.error) throw new Error(result.error);
@@ -583,14 +583,16 @@
         let dateObj = new Date(item.timestamp);
         let tgl = isNaN(dateObj) ? item.timestamp : dateObj.toLocaleDateString('id-ID');
         let statusBaru = item.statusKlaim || "PJ Keuangan";
-        let nominal = item.nominalAdmin || "-";
-        // Parse catatan dari statusKlaim jika ada separator ||
-        let catatanRevisi = item.catatanRevisi || item['Catatan Revisi'] || '';
-        if (!catatanRevisi && statusBaru.includes('||')) {
+        // Decode catatan dari statusKlaim jika ada (format: "Status||catatan")
+        let catatanRevisi = '';
+        if (statusBaru.includes('||')) {
           const parts = statusBaru.split('||');
           statusBaru = parts[0].trim();
-          catatanRevisi = parts.slice(1).join('||').trim();
+          catatanRevisi = parts[1] ? parts[1].trim() : '';
+        } else {
+          catatanRevisi = item.catatanRevisi || '';
         }
+        let nominal = item.nominalAdmin || "-";
         let nominalFormatted = formatRupiah(nominal);
         
         let currIdx = STATUS_FLOW.indexOf(statusBaru);
@@ -669,17 +671,18 @@
         if(item.linkTransport) links += `<a href="${item.linkTransport}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block;"><i class="fa-solid fa-car"></i> Lihat Transport</a>`;
 
         let currStat = item.statusKlaim || "PJ Keuangan";
-        // Parse catatan dari statusKlaim jika ada separator ||
-        let catatanAdmin = '';
-        let displayStat = currStat;
+        // Decode catatan dari statusKlaim jika ada (format: "Status||catatan")
+        let catatanTersimpan = '';
         if (currStat.includes('||')) {
           const parts = currStat.split('||');
-          displayStat = parts[0].trim();
-          catatanAdmin = parts.slice(1).join('||').trim();
+          currStat = parts[0].trim();
+          catatanTersimpan = parts[1] ? parts[1].trim() : '';
+        } else {
+          catatanTersimpan = item.catatanRevisi || '';
         }
-        let optHtml = `<option value="Revisi Data/Berkas Ditolak" ${displayStat === 'Revisi Data/Berkas Ditolak' ? 'selected' : ''}>Revisi / Tolak</option>`;
+        let optHtml = `<option value="Revisi Data/Berkas Ditolak">Revisi / Tolak</option>`;
         STATUS_FLOW.forEach(s => {
-          let sel = (s === displayStat) ? "selected" : "";
+          let sel = (s === currStat) ? "selected" : "";
           optHtml += `<option value="${s}" ${sel}>${s}</option>`;
         });
 
@@ -688,11 +691,11 @@
           <td><b>${item.namaLengkap}</b><br><span style="font-size:0.8rem; color:#64748b;">${item.jabatan}</span></td>
           <td>${item.kegiatan} - ${item.tujuan}</td>
           <td>${links}</td>
-          <td><span class="badge badge-process">${displayStat}</span></td>
+          <td><span class="badge badge-process">${currStat}</span></td>
           <td class="no-print">
             <select id="sel_${item.docId}" class="form-control" style="width:160px; padding:0.2rem;" onchange="toggleCatatanRevisi('${item.docId}', this.value)">${optHtml}</select>
-            <div id="catatan_${item.docId}" style="display:${displayStat.includes('Revisi') ? 'block' : 'none'}; margin-top:0.5rem;">
-              <textarea class="form-control catatan-textarea" data-docid="${item.docId}" rows="2" placeholder="Tuliskan alasan revisi/penolakan..." style="font-size:0.8rem;">${catatanAdmin}</textarea>
+            <div id="catatan_${item.docId}" style="display:${currStat.includes('Revisi') ? 'block' : 'none'}; margin-top:0.5rem;">
+              <textarea class="form-control catatan-textarea" data-docid="${item.docId}" rows="2" placeholder="Tuliskan alasan revisi/penolakan..." style="font-size:0.8rem;">${catatanTersimpan}</textarea>
             </div>
           </td>
           <td class="no-print"><input type="number" id="nom_${item.docId}" value="${item.nominalAdmin == '-' ? '' : item.nominalAdmin}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
@@ -717,24 +720,25 @@
       const nStat = document.getElementById('sel_' + docId).value;
       const nNom = document.getElementById('nom_' + docId).value;
       
-      // Gabungkan status + catatan dengan separator || jika Revisi
+      // Ambil catatan dari textarea
       let catatan = '';
       const catatanEl = document.querySelector('.catatan-textarea[data-docid="' + docId + '"]');
       if(catatanEl) catatan = catatanEl.value.trim();
-      
-      // Simpan catatan di dalam statusKlaim dengan separator ||
-      let finalStatus = nStat;
-      if(nStat === 'Revisi Data/Berkas Ditolak' && catatan !== '') {
-        finalStatus = nStat + '||' + catatan;
+
+      // Encode catatan ke dalam statusKlaim agar tersimpan di kolom yang sudah ada
+      // Format: "StatusKlaim" atau "StatusKlaim||catatan alasan"
+      let statusEncoded = nStat;
+      if (nStat === 'Revisi Data/Berkas Ditolak' && catatan !== '') {
+        statusEncoded = nStat + '||' + catatan;
       }
 
       try {
-          await window.firebaseUpdateStatus(docId, finalStatus, nNom, '');
+          await window.firebaseUpdateStatus(docId, statusEncoded, nNom);
           Swal.fire('Tersimpan', 'Status Klaim Berhasil Diperbarui', 'success');
           loadAdminData();
       } catch (e) {
           document.getElementById('loadingDiv').style.display = 'none';
-          Swal.fire('Gagal', 'Gagal menyimpan update: ' + e.message, 'error');
+          Swal.fire('Gagal', 'Gagal menyimpan: ' + e.message, 'error');
       }
     }
 
