@@ -170,14 +170,14 @@
         return await res.json();
     }
 
-    window.firebaseUpdateStatus = async function(docId, newStatus, nominal) {
+    window.firebaseUpdateStatus = async function(docId, newStatus, nominal, catatanRevisi) {
       if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) throw new Error("Link Google Sheets Apps Script belum diisi!");
       
       const response = await fetch(GOOGLE_SCRIPT_URL, {
           redirect: "follow",
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: "update", docId: docId, statusKlaim: newStatus, nominalAdmin: nominal })
+          body: JSON.stringify({ action: "update", docId: docId, statusKlaim: newStatus, nominalAdmin: nominal, catatanRevisi: catatanRevisi || '' })
       });
       const result = await response.json();
       if(result.error) throw new Error(result.error);
@@ -322,7 +322,7 @@
           <div id="statusResultArea" style="display:none;">
             <div style="padding: 1rem; background-color:var(--primary); color:white; border-radius:var(--radius-sm); margin-bottom:1rem;">
               <h3 id="resNama" style="margin-bottom:0.25rem;">Nama Pegawai</h3>
-              <p style="font-size:0.9rem; opacity:0.9;">Total Pengajuan Klaim: <b id="resTotal">0</b> dokumen</p>
+              <p style="font-size:0.9rem; opacity:0.9;">Total Pengajuan Klaim: <b id="resTotal">0</b> pengajuan klaim</p>
             </div>
 
             <div id="resList">
@@ -599,6 +599,7 @@
           <div class="flow-container" style="margin-top:1rem;">
             ${flowHtml}
           </div>
+          ${currIdx === -1 && item.catatanRevisi ? `<div style="margin-top:1rem; background:#fee2e2; border-left:4px solid #ef4444; padding:0.75rem 1rem; border-radius:6px; font-size:0.9rem;"><b><i class='fa-solid fa-circle-exclamation'></i> Catatan Revisi/Penolakan:</b><br>${item.catatanRevisi}</div>` : ''}
         `;
         list.appendChild(card);
       });
@@ -653,7 +654,12 @@
           <td>${item.kegiatan} - ${item.tujuan}</td>
           <td>${links}</td>
           <td><span class="badge badge-process">${currStat}</span></td>
-          <td class="no-print"><select id="sel_${item.docId}" class="form-control" style="width:160px; padding:0.2rem;">${optHtml}</select></td>
+          <td class="no-print">
+            <select id="sel_${item.docId}" class="form-control" style="width:160px; padding:0.2rem;" onchange="toggleCatatanRevisi('${item.docId}', this.value)">${optHtml}</select>
+            <div id="catatan_${item.docId}" style="display:${currStat.includes('Revisi') ? 'block' : 'none'}; margin-top:0.5rem;">
+              <textarea id="txt_catatan_${item.docId}" class="form-control" rows="2" placeholder="Tuliskan alasan revisi/penolakan..." style="font-size:0.8rem;">${item.catatanRevisi || ''}</textarea>
+            </div>
+          </td>
           <td class="no-print"><input type="number" id="nom_${item.docId}" value="${item.nominalAdmin == '-' ? '' : item.nominalAdmin}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
           <td class="no-print"><button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="simpanRow('${item.docId}')"><i class="fa-solid fa-save"></i></button></td>
           <td class="no-print"><button class="btn" style="padding:0.4rem 0.8rem; font-size:0.85rem; background:#475569; color:white;" onclick="downloadDokumen('${item.docId}', '${item.namaLengkap}', '${tgl}', '${item.kegiatan}', '${item.tujuan}', '${item.jabatan}', '${currStat}', '${item.nominalAdmin}', '${item.linkST||''}', '${item.linkSPPD||''}', '${item.linkHotel||''}', '${item.linkTransport||''}')"><i class="fa-solid fa-download"></i></button></td>
@@ -662,13 +668,24 @@
       });
     }
 
+    function toggleCatatanRevisi(docId, value) {
+      const catatanDiv = document.getElementById('catatan_' + docId);
+      if(value === 'Revisi Data/Berkas Ditolak') {
+        catatanDiv.style.display = 'block';
+      } else {
+        catatanDiv.style.display = 'none';
+      }
+    }
+
     async function simpanRow(docId) {
       document.getElementById('loadingDiv').style.display = 'flex';
       const nStat = document.getElementById('sel_' + docId).value;
       const nNom = document.getElementById('nom_' + docId).value;
+      const catatanEl = document.getElementById('txt_catatan_' + docId);
+      const catatan = catatanEl ? catatanEl.value : '';
 
       try {
-          await window.firebaseUpdateStatus(docId, nStat, nNom);
+          await window.firebaseUpdateStatus(docId, nStat, nNom, catatan);
           Swal.fire('Tersimpan', 'Status Klaim Berhasil Diperbarui', 'success');
           loadAdminData();
       } catch (e) {
