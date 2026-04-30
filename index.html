@@ -196,7 +196,11 @@
 
   <nav>
     <div class="logo">
-      <i class="fa-solid fa-plane-departure"></i> SIPERDIN BBPK Jakarta
+      <i class="fa-solid fa-plane-departure"></i>
+      <div>
+        <div>SIPERDIN BBPK Jakarta</div>
+        <div style="font-size:0.7rem; font-weight:400; color:var(--text-muted); margin-top:-2px;">Sistem Informasi Perjalanan Dinas</div>
+      </div>
     </div>
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchView('pegawai')" id="tabPegawai">Menu Pegawai</button>
@@ -241,49 +245,58 @@
               <input type="number" id="peserta" class="form-control" min="1" value="1" oninput="checkFormValid()">
             </div>
 
-            <div class="section-title">Ceklist Dokumen Unggahan</div>
-            
-            <div class="checklist-item">
-              <div class="checklist-info">
-                <i class="fa-solid fa-file-pdf"></i>
-                <div class="check-title">Surat Tugas <span class="tag-wajib">Wajib</span></div>
+            <div class="section-title">Ceklist Kelengkapan Dokumen</div>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;"><i class="fa-solid fa-circle-info"></i> Pastikan Anda sudah memiliki dokumen berikut sebelum melakukan unggahan:</p>
+
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="chk_st" onchange="toggleUpload('st'); checkFormValid()" style="width:18px;height:18px;cursor:pointer;">
+                <label for="chk_st" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i> Surat Tugas <span class="tag-wajib">Wajib</span></label>
               </div>
-              <div class="file-input-wrapper">
-                <span style="font-size: 0.85rem; color:var(--primary);" id="lbl-st"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
-                <input type="file" id="file_st" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-st'); checkFormValid()">
+              <div id="upload_st" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
+                <div class="file-input-wrapper" style="max-width:300px;">
+                  <span style="font-size:0.85rem; color:var(--primary);" id="lbl-st"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                  <input type="file" id="file_st" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-st'); checkFormValid()">
+                </div>
               </div>
             </div>
 
-            <div class="checklist-item">
-              <div class="checklist-info">
-                <i class="fa-solid fa-file-signature"></i>
-                <div class="check-title">SPD / SPPD <span class="tag-wajib">Wajib</span></div>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="chk_sppd" onchange="toggleUpload('sppd'); checkFormValid()" style="width:18px;height:18px;cursor:pointer;">
+                <label for="chk_sppd" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-file-signature" style="color:#2563eb;"></i> SPD dan SPPD <span class="tag-wajib">Wajib</span></label>
               </div>
-              <div class="file-input-wrapper">
-                <span style="font-size: 0.85rem; color:var(--primary);" id="lbl-sppd"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
-                <input type="file" id="file_sppd" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-sppd'); checkFormValid()">
-              </div>
-            </div>
-
-            <div class="checklist-item">
-              <div class="checklist-info">
-                <i class="fa-solid fa-hotel"></i>
-                <div class="check-title">Kwitansi Hotel</div>
-              </div>
-              <div class="file-input-wrapper">
-                <span style="font-size: 0.85rem; color:var(--text-muted);" id="lbl-hotel"><i class="fa-solid fa-upload"></i> Unggah Dokumen (Opsional)</span>
-                <input type="file" id="file_hotel" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-hotel')">
+              <div id="upload_sppd" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
+                <div class="file-input-wrapper" style="max-width:300px;">
+                  <span style="font-size:0.85rem; color:var(--primary);" id="lbl-sppd"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                  <input type="file" id="file_sppd" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-sppd'); checkFormValid()">
+                </div>
               </div>
             </div>
 
-            <div class="checklist-item">
-              <div class="checklist-info">
-                <i class="fa-solid fa-car"></i>
-                <div class="check-title">Kwitansi Transportasi</div>
+            <div style="background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="chk_hotel" onchange="toggleUpload('hotel')" style="width:18px;height:18px;cursor:pointer;">
+                <label for="chk_hotel" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-hotel" style="color:#64748b;"></i> Kwitansi Hotel <span style="font-size:0.7rem; color:#64748b;">(Opsional)</span></label>
               </div>
-              <div class="file-input-wrapper">
-                <span style="font-size: 0.85rem; color:var(--text-muted);" id="lbl-trans"><i class="fa-solid fa-upload"></i> Unggah Dokumen (Opsional)</span>
-                <input type="file" id="file_trans" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-trans')">
+              <div id="upload_hotel" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
+                <div class="file-input-wrapper" style="max-width:300px;">
+                  <span style="font-size:0.85rem; color:var(--text-muted);" id="lbl-hotel"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                  <input type="file" id="file_hotel" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-hotel')">
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="chk_trans" onchange="toggleUpload('trans')" style="width:18px;height:18px;cursor:pointer;">
+                <label for="chk_trans" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-car" style="color:#64748b;"></i> Kwitansi Transportasi <span style="font-size:0.7rem; color:#64748b;">(Opsional)</span></label>
+              </div>
+              <div id="upload_trans" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
+                <div class="file-input-wrapper" style="max-width:300px;">
+                  <span style="font-size:0.85rem; color:var(--text-muted);" id="lbl-trans"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                  <input type="file" id="file_trans" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-trans')">
+                </div>
               </div>
             </div>
 
@@ -302,6 +315,9 @@
             <input type="text" id="searchNamaPgw" class="form-control" placeholder="Masukkan Nama Lengkap Anda...">
             <button class="btn btn-primary" onclick="cariStatusPegawai()"><i class="fa-solid fa-search"></i> Cari Data</button>
           </div>
+          <div id="refreshStatusArea" style="display:none; margin-bottom:1rem;">
+            <button class="btn" style="background:#f59e0b; color:white;" onclick="cariStatusPegawai()"><i class="fa-solid fa-rotate-right"></i> Refresh Status Terkini</button>
+          </div>
 
           <div id="statusResultArea" style="display:none;">
             <div style="padding: 1rem; background-color:var(--primary); color:white; border-radius:var(--radius-sm); margin-bottom:1rem;">
@@ -319,10 +335,10 @@
     <!-- MENU ADMIN -->
     <div id="viewAdmin">
       <div class="card">
-        <div class="card-title"><i class="fa-solid fa-user-shield"></i> Panel Admin - Database Firebase Pengelolaan Klaim</div>
+        <div class="card-title"><i class="fa-solid fa-user-shield"></i> Panel Admin - Pengelolaan Klaim Perjalanan Dinas</div>
         
         <div style="background-color: #eff6ff; border: 1px dashed var(--primary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">
-          <i class="fa-solid fa-info-circle text-primary"></i> <b>Integrasi Vercel:</b> Secara otomatis terhubung dengan Firebase Realtime / Firestore. Semua unggahan juga diletakkan dalam *Firebase Storage*.
+          <i class="fa-solid fa-info-circle text-primary"></i> <b>Integrasi Google Sheets:</b> Secara otomatis terhubung dengan Google Sheets & Google Drive. Semua unggahan tersimpan di folder SIPERDIN_UPLOADS.
         </div>
 
         <div style="margin-bottom:1rem; display:flex; justify-content:space-between;" class="no-print">
@@ -341,11 +357,12 @@
                 <th>Status / Progress Tahapan</th>
                 <th class="no-print">Action Status</th>
                 <th class="no-print">Nominal Klaim (Rp)</th>
-                <th class="no-print">Simpan Action</th>
+                <th class="no-print">Simpan</th>
+                <th class="no-print">Download</th>
               </tr>
             </thead>
             <tbody id="adminTbody">
-              <tr><td colspan="8" style="text-align:center; padding:2rem;">Klik Refresh Data...</td></tr>
+              <tr><td colspan="9" style="text-align:center; padding:2rem;">Klik Refresh Data...</td></tr>
             </tbody>
           </table>
         </div>
@@ -422,10 +439,15 @@
       document.getElementById('subStatus').classList.toggle('active', sub === 'status');
     }
 
+    function toggleUpload(type) {
+      const chk = document.getElementById('chk_' + type);
+      const upload = document.getElementById('upload_' + type);
+      upload.style.display = chk.checked ? 'block' : 'none';
+    }
+
     function updateFileName(input, labelId) {
       const label = document.getElementById(labelId);
-      const isOptional = labelId === 'lbl-hotel' || labelId === 'lbl-trans';
-      const defaultText = isOptional ? `<i class="fa-solid fa-upload"></i> Unggah Dokumen (Opsional)` : `<i class="fa-solid fa-upload"></i> Unggah Dokumen`;
+      const defaultText = `<i class="fa-solid fa-upload"></i> Unggah Dokumen`;
       
       if(input.files.length > 0) {
         label.innerHTML = `<span style="font-weight:600;"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i> ${input.files[0].name}</span>`;
@@ -440,10 +462,12 @@
       const var2 = document.getElementById('jabatan').value.trim();
       const var3 = document.getElementById('kegiatan').value.trim();
       const var4 = document.getElementById('tujuan').value.trim();
+      const chkSt = document.getElementById('chk_st').checked;
+      const chkSppd = document.getElementById('chk_sppd').checked;
       const st = document.getElementById('file_st').files.length > 0;
       const sppd = document.getElementById('file_sppd').files.length > 0;
 
-      if(var1 && var2 && var3 && var4 && st && sppd) {
+      if(var1 && var2 && var3 && var4 && chkSt && chkSppd && st && sppd) {
         btn.classList.add('ready');
       } else {
         btn.classList.remove('ready');
@@ -538,6 +562,7 @@
       const list = document.getElementById('resList');
       
       area.style.display = 'block';
+      document.getElementById('refreshStatusArea').style.display = 'block';
       document.getElementById('resNama').innerText = document.getElementById('searchNamaPgw').value;
       document.getElementById('resTotal').innerText = response.total;
 
@@ -603,7 +628,7 @@
       tbody.innerHTML = '';
       
       if(!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Belum ada data pengajuan</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Belum ada data pengajuan</td></tr>';
         return;
       }
 
@@ -635,6 +660,7 @@
           <td class="no-print"><select id="sel_${item.docId}" class="form-control" style="width:160px; padding:0.2rem;">${optHtml}</select></td>
           <td class="no-print"><input type="number" id="nom_${item.docId}" value="${item.nominalAdmin == '-' ? '' : item.nominalAdmin}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
           <td class="no-print"><button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="simpanRow('${item.docId}')"><i class="fa-solid fa-save"></i></button></td>
+          <td class="no-print"><button class="btn" style="padding:0.4rem 0.8rem; font-size:0.85rem; background:#475569; color:white;" onclick="downloadDokumen('${item.docId}', '${item.namaLengkap}', '${tgl}', '${item.kegiatan}', '${item.tujuan}', '${item.jabatan}', '${currStat}', '${item.nominalAdmin}', '${item.linkST||''}', '${item.linkSPPD||''}', '${item.linkHotel||''}', '${item.linkTransport||''}')"><i class="fa-solid fa-download"></i></button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -653,6 +679,56 @@
           document.getElementById('loadingDiv').style.display = 'none';
           Swal.fire('Gusar', 'Gagal menyimpan update.', 'error');
       }
+    }
+
+    function downloadDokumen(docId, nama, tgl, kegiatan, tujuan, jabatan, status, nominal, linkST, linkSPPD, linkHotel, linkTransport) {
+      let dokLinks = '';
+      if(linkST) dokLinks += `<li><a href="${linkST}" target="_blank">📄 Surat Tugas</a></li>`;
+      if(linkSPPD) dokLinks += `<li><a href="${linkSPPD}" target="_blank">📋 SPD/SPPD</a></li>`;
+      if(linkHotel) dokLinks += `<li><a href="${linkHotel}" target="_blank">🏨 Kwitansi Hotel</a></li>`;
+      if(linkTransport) dokLinks += `<li><a href="${linkTransport}" target="_blank">🚗 Kwitansi Transport</a></li>`;
+
+      const htmlContent = `
+        <html><head><meta charset="UTF-8">
+        <title>Dokumen Klaim - ${nama}</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; }
+          .header { text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { color: #2563eb; font-size: 1.5rem; }
+          .header p { color: #64748b; font-size: 0.9rem; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { padding: 10px 15px; text-align: left; border: 1px solid #e2e8f0; }
+          th { background: #f1f5f9; font-weight: 600; width: 35%; }
+          .status { display: inline-block; padding: 4px 12px; border-radius: 20px; background: #fef3c7; color: #d97706; font-weight: 600; font-size: 0.85rem; }
+          .footer { margin-top: 40px; text-align: center; color: #94a3b8; font-size: 0.8rem; }
+          ul { list-style: none; padding: 0; } li { margin-bottom: 8px; } a { color: #2563eb; }
+        </style></head><body>
+        <div class="header">
+          <h1>✈️ SIPERDIN BBPK Jakarta</h1>
+          <p>Sistem Informasi Perjalanan Dinas</p>
+        </div>
+        <h2 style="font-size:1.1rem; margin-bottom:15px;">Detail Pengajuan Klaim Perjalanan Dinas</h2>
+        <table>
+          <tr><th>ID Klaim</th><td>${docId}</td></tr>
+          <tr><th>Tanggal Pengajuan</th><td>${tgl}</td></tr>
+          <tr><th>Nama Lengkap</th><td>${nama}</td></tr>
+          <tr><th>Jabatan</th><td>${jabatan}</td></tr>
+          <tr><th>Kegiatan</th><td>${kegiatan}</td></tr>
+          <tr><th>Tujuan</th><td>${tujuan}</td></tr>
+          <tr><th>Status Klaim</th><td><span class="status">${status}</span></td></tr>
+          <tr><th>Nominal</th><td>Rp ${nominal}</td></tr>
+        </table>
+        <h3 style="font-size:1rem; margin-top:25px;">Dokumen Terlampir:</h3>
+        <ul>${dokLinks || '<li style="color:#94a3b8;">Tidak ada dokumen terlampir</li>'}</ul>
+        <div class="footer">Dicetak dari SIPERDIN BBPK Jakarta — ${new Date().toLocaleDateString('id-ID')}</div>
+        </body></html>
+      `;
+
+      const printWin = window.open('', '_blank');
+      printWin.document.write(htmlContent);
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => { printWin.print(); }, 500);
     }
 
     switchSubMenu('form');
