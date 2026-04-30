@@ -584,22 +584,30 @@
         });
 
         let card = document.createElement('div');
-        card.style.cssText = "border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;";
+        let isRevisi = currIdx === -1;
+        card.style.cssText = `border: ${isRevisi ? '2px solid #ef4444' : '1px solid var(--border)'}; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; ${isRevisi ? 'background:#fff5f5;' : ''}`;
         card.innerHTML = `
           <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
             <div>
               <div style="font-size:0.85rem; color:var(--text-muted);">#ID: ${item.idKlaim} &bull; ${tgl}</div>
               <h4 style="margin-top:0.2rem; color:var(--text-main);">${item.kegiatan} - ${item.tujuan}</h4>
             </div>
-            <div style="text-align:right;">
-             <span class="badge ${currIdx===-1 ? 'bg-danger' : 'badge-process'}">${statusBaru}</span>
+             <div style="text-align:right;">
+              ${currIdx===-1 
+                ? `<span style="font-size:1rem; font-weight:700; color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> Revisi Data / Berkas Ditolak</span>`
+                : `<span class="badge badge-process">${statusBaru}</span>`
+              }
              <div style="margin-top:0.5rem; font-size:0.9rem;">Nominal Disetujui: <strong style="color:var(--success);">Rp ${nominal}</strong></div>
             </div>
           </div>
           <div class="flow-container" style="margin-top:1rem;">
             ${flowHtml}
           </div>
-          ${currIdx === -1 && item.catatanRevisi ? `<div style="margin-top:1rem; background:#fee2e2; border-left:4px solid #ef4444; padding:0.75rem 1rem; border-radius:6px; font-size:0.9rem;"><b><i class='fa-solid fa-circle-exclamation'></i> Catatan Revisi/Penolakan:</b><br>${item.catatanRevisi}</div>` : ''}
+          ${currIdx === -1 ? `
+            <div style="margin-top:1.25rem; background:#fee2e2; border-left:5px solid #ef4444; padding:1rem 1.25rem; border-radius:6px;">
+              <div style="font-size:1rem; font-weight:700; color:#991b1b; margin-bottom:0.5rem;"><i class="fa-solid fa-circle-exclamation"></i> Alasan Revisi / Penolakan:</div>
+              <div style="font-size:0.95rem; color:#7f1d1d;">${item.catatanRevisi && item.catatanRevisi.trim() !== '' ? item.catatanRevisi : '<em>Belum ada catatan dari Admin. Silakan hubungi bagian keuangan untuk informasi lebih lanjut.</em>'}</div>
+            </div>` : ''}
         `;
         list.appendChild(card);
       });
