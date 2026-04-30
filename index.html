@@ -258,6 +258,7 @@
                   <span style="font-size:0.85rem; color:var(--primary);" id="lbl-st"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
                   <input type="file" id="file_st" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-st'); checkFormValid()">
                 </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:0.35rem;"><i class="fa-solid fa-circle-info"></i> Format: PDF / Gambar &bull; Maks. 2 MB</div>
               </div>
             </div>
 
@@ -271,6 +272,7 @@
                   <span style="font-size:0.85rem; color:var(--primary);" id="lbl-sppd"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
                   <input type="file" id="file_sppd" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-sppd'); checkFormValid()">
                 </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:0.35rem;"><i class="fa-solid fa-circle-info"></i> Format: PDF / Gambar &bull; Maks. 2 MB</div>
               </div>
             </div>
 
@@ -284,6 +286,7 @@
                   <span style="font-size:0.85rem; color:var(--text-muted);" id="lbl-hotel"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
                   <input type="file" id="file_hotel" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-hotel')">
                 </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:0.35rem;"><i class="fa-solid fa-circle-info"></i> Format: PDF / Gambar &bull; Maks. 2 MB</div>
               </div>
             </div>
 
@@ -297,6 +300,7 @@
                   <span style="font-size:0.85rem; color:var(--text-muted);" id="lbl-trans"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
                   <input type="file" id="file_trans" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-trans')">
                 </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:0.35rem;"><i class="fa-solid fa-circle-info"></i> Format: PDF / Gambar &bull; Maks. 2 MB</div>
               </div>
             </div>
 
@@ -665,7 +669,7 @@
           <td class="no-print">
             <select id="sel_${item.docId}" class="form-control" style="width:160px; padding:0.2rem;" onchange="toggleCatatanRevisi('${item.docId}', this.value)">${optHtml}</select>
             <div id="catatan_${item.docId}" style="display:${currStat.includes('Revisi') ? 'block' : 'none'}; margin-top:0.5rem;">
-              <textarea id="txt_catatan_${item.docId}" class="form-control" rows="2" placeholder="Tuliskan alasan revisi/penolakan..." style="font-size:0.8rem;">${item.catatanRevisi || ''}</textarea>
+              <textarea class="form-control catatan-textarea" data-docid="${item.docId}" rows="2" placeholder="Tuliskan alasan revisi/penolakan..." style="font-size:0.8rem;">${item.catatanRevisi || ''}</textarea>
             </div>
           </td>
           <td class="no-print"><input type="number" id="nom_${item.docId}" value="${item.nominalAdmin == '-' ? '' : item.nominalAdmin}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
@@ -689,8 +693,13 @@
       document.getElementById('loadingDiv').style.display = 'flex';
       const nStat = document.getElementById('sel_' + docId).value;
       const nNom = document.getElementById('nom_' + docId).value;
-      const catatanEl = document.getElementById('txt_catatan_' + docId);
-      const catatan = catatanEl ? catatanEl.value : '';
+      
+      // Cari catatan via data-attribute agar lebih robust
+      let catatan = '';
+      const catatanByAttr = document.querySelector('.catatan-textarea[data-docid="' + docId + '"]');
+      const catatanById = document.getElementById('txt_catatan_' + docId);
+      if(catatanByAttr) catatan = catatanByAttr.value;
+      else if(catatanById) catatan = catatanById.value;
 
       try {
           await window.firebaseUpdateStatus(docId, nStat, nNom, catatan);
@@ -698,7 +707,7 @@
           loadAdminData();
       } catch (e) {
           document.getElementById('loadingDiv').style.display = 'none';
-          Swal.fire('Gusar', 'Gagal menyimpan update.', 'error');
+          Swal.fire('Gagal', 'Gagal menyimpan update: ' + e.message, 'error');
       }
     }
 
