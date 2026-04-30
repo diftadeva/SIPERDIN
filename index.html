@@ -316,7 +316,7 @@
             <button class="btn btn-primary" onclick="cariStatusPegawai()"><i class="fa-solid fa-search"></i> Cari Data</button>
           </div>
           <div id="refreshStatusArea" style="display:none; margin-bottom:1rem;">
-            <button class="btn" style="background:#f59e0b; color:white;" onclick="cariStatusPegawai()"><i class="fa-solid fa-rotate-right"></i> Refresh Status Terkini</button>
+            <button class="btn" style="background:#10b981; color:white;" onclick="cariStatusPegawai()"><i class="fa-solid fa-rotate-right"></i> Refresh Status Pengajuan</button>
           </div>
 
           <div id="statusResultArea" style="display:none;">
@@ -337,10 +337,6 @@
       <div class="card">
         <div class="card-title"><i class="fa-solid fa-user-shield"></i> Panel Admin - Pengelolaan Klaim Perjalanan Dinas</div>
         
-        <div style="background-color: #eff6ff; border: 1px dashed var(--primary); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">
-          <i class="fa-solid fa-info-circle text-primary"></i> <b>Integrasi Google Sheets:</b> Secara otomatis terhubung dengan Google Sheets & Google Drive. Semua unggahan tersimpan di folder SIPERDIN_UPLOADS.
-        </div>
-
         <div style="margin-bottom:1rem; display:flex; justify-content:space-between;" class="no-print">
           <button class="btn btn-primary" onclick="loadAdminData()"><i class="fa-solid fa-rotate-right"></i> Refresh Data Keseluruhan</button>
           <button class="btn" style="background:#475569; color:white;" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak PDF Laporan</button>
@@ -516,7 +512,7 @@
         document.getElementById('loadingDiv').style.display = 'none';
         Swal.fire({
             title: 'Berhasil!', 
-            text: 'Terima kasih, pengajuan sedang diproses, mohon ditunggu ya :).', 
+            text: 'Terima kasih, pengajuan sedang diproses. Mohon ditunggu \ud83d\ude0a', 
             icon: 'success'
         }).then(() => {
             document.getElementById('formKlaim').reset();
@@ -673,7 +669,7 @@
 
       try {
           await window.firebaseUpdateStatus(docId, nStat, nNom);
-          Swal.fire('Tersimpan', 'Status clan Nominal berhasil diperbarui di Cloud Database.', 'success');
+          Swal.fire('Tersimpan', 'Status Klaim Berhasil Diperbarui', 'success');
           loadAdminData();
       } catch (e) {
           document.getElementById('loadingDiv').style.display = 'none';
