@@ -332,6 +332,20 @@
           <button class="btn btn-primary" onclick="loadAdminData()"><i class="fa-solid fa-rotate-right"></i> Refresh Data Keseluruhan</button>
           <button class="btn" style="background:#475569; color:white;" onclick="window.print()"><i class="fa-solid fa-print"></i> Cetak PDF Laporan</button>
         </div>
+
+        <!-- SEARCH BOX ADMIN -->
+        <div class="no-print" style="margin-bottom:1rem; display:flex; gap:0.5rem; align-items:center;">
+          <div style="flex:1; position:relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:0.85rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+            <input type="text" id="adminSearchInput" class="form-control" placeholder="Cari nama pegawai..." oninput="filterAdminTable(this.value)" style="padding-left:2.5rem; border-radius:30px; font-size:0.9rem;">
+          </div>
+          <button class="btn" style="background:var(--lime); color:#1a3a00; border-radius:30px; padding:0.6rem 1.2rem; font-size:0.88rem;" onclick="document.getElementById('adminSearchInput').value=''; filterAdminTable('')">
+            <i class="fa-solid fa-xmark"></i> Reset
+          </button>
+        </div>
+        <div id="adminSearchInfo" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem; display:none;">
+          <i class="fa-solid fa-circle-info"></i> Menampilkan <strong id="adminSearchCount">0</strong> hasil pencarian untuk "<span id="adminSearchKeyword"></span>"
+        </div>
         
         <div class="table-responsive">
           <table id="adminTable">
@@ -622,18 +636,45 @@
     }
 
     // --- ADMIN LOGIC --- //
+    let _allAdminData = [];
+
     async function loadAdminData(){
       if(!window.fetchAdminData) return;
       document.getElementById('loadingDiv').style.display = 'flex';
-
       try {
           const data = await window.fetchAdminData();
-          renderAdminTable(data);
+          _allAdminData = data || [];
+          // Reset search
+          const inp = document.getElementById('adminSearchInput');
+          if(inp) inp.value = '';
+          document.getElementById('adminSearchInfo').style.display = 'none';
+          renderAdminTable(_allAdminData);
       } catch (e) {
           document.getElementById('loadingDiv').style.display = 'none';
           alert('Gagal mengambil data dari Database Server: ' + e.message);
       }
     }
+
+    function filterAdminTable(keyword) {
+      const q = keyword.trim().toLowerCase();
+      const infoBox = document.getElementById('adminSearchInfo');
+      if (!q) {
+        renderAdminTable(_allAdminData);
+        infoBox.style.display = 'none';
+        return;
+      }
+      const filtered = _allAdminData.filter(item => {
+        const nama = (item.namaLengkap || item.searchName || '').toLowerCase();
+        const jabatan = (item.jabatan || '').toLowerCase();
+        const kegiatan = (item.kegiatan || '').toLowerCase();
+        return nama.includes(q) || jabatan.includes(q) || kegiatan.includes(q);
+      });
+      renderAdminTable(filtered);
+      infoBox.style.display = 'block';
+      document.getElementById('adminSearchCount').textContent = filtered.length;
+      document.getElementById('adminSearchKeyword').textContent = keyword.trim();
+    }
+
 
     function renderAdminTable(data) {
       document.getElementById('loadingDiv').style.display = 'none';
