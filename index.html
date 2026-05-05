@@ -116,6 +116,7 @@
           kegiatan: formData.kegiatan,
           tujuan: formData.tujuan,
           jumlahPeserta: formData.peserta,
+          jumlahHari: formData.jumlahHari,
           statusKlaim: "PJ Keuangan",
           nominalAdmin: "-",
           timestamp: new Date().toISOString(),
@@ -231,6 +232,10 @@
               <label>Jumlah Peserta</label>
               <input type="number" id="peserta" class="form-control" min="1" value="1" oninput="checkFormValid()">
             </div>
+            <div class="form-group">
+              <label>Jumlah Hari</label>
+              <input type="number" id="jumlahHari" class="form-control" min="1" value="1" placeholder="Minimal 1 hari..." oninput="checkFormValid()">
+            </div>
 
             <div class="section-title">Ceklist Kelengkapan Dokumen</div>
             <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;"><i class="fa-solid fa-circle-info"></i> Pastikan Anda sudah memiliki dokumen berikut sebelum melakukan unggahan:</p>
@@ -252,7 +257,7 @@
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
               <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
                 <input type="checkbox" id="chk_sppd" onchange="toggleUpload('sppd'); checkFormValid()" style="width:18px;height:18px;cursor:pointer;">
-                <label for="chk_sppd" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-file-signature" style="color:#2563eb;"></i> SPD dan SPPD <span class="tag-wajib">Wajib</span></label>
+                <label for="chk_sppd" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-file-signature" style="color:#2563eb;"></i> SPD <span class="tag-wajib">Wajib</span></label>
               </div>
               <div id="upload_sppd" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
                 <div class="file-input-wrapper" style="max-width:300px;">
@@ -463,12 +468,13 @@
       const var2 = document.getElementById('jabatan').value.trim();
       const var3 = document.getElementById('kegiatan').value.trim();
       const var4 = document.getElementById('tujuan').value.trim();
+      const hari = parseInt(document.getElementById('jumlahHari').value) || 0;
       const chkSt = document.getElementById('chk_st').checked;
       const chkSppd = document.getElementById('chk_sppd').checked;
       const st = document.getElementById('file_st').files.length > 0;
       const sppd = document.getElementById('file_sppd').files.length > 0;
 
-      if(var1 && var2 && var3 && var4 && chkSt && chkSppd && st && sppd) {
+      if(var1 && var2 && var3 && var4 && hari >= 1 && chkSt && chkSppd && st && sppd) {
         btn.classList.add('ready');
       } else {
         btn.classList.remove('ready');
@@ -501,7 +507,8 @@
         jabatan: document.getElementById('jabatan').value,
         kegiatan: document.getElementById('kegiatan').value,
         tujuan: document.getElementById('tujuan').value,
-        peserta: document.getElementById('peserta').value
+        peserta: document.getElementById('peserta').value,
+        jumlahHari: document.getElementById('jumlahHari').value
       };
 
       const files = {
