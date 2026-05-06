@@ -158,14 +158,19 @@
         return await res.json();
     }
 
-    window.firebaseUpdateStatus = async function(docId, encodedStatus, nominal) {
+    window.firebaseUpdateStatus = async function(docId, encodedStatus, nominal, jumlahHari) {
       if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) throw new Error("Link Google Sheets Apps Script belum diisi!");
       
+      let bodyData = { action: "update", docId: docId, statusKlaim: encodedStatus, nominalAdmin: nominal };
+      if(jumlahHari !== undefined && jumlahHari !== null && jumlahHari !== '') {
+        bodyData.jumlahHari = jumlahHari;
+      }
+
       const response = await fetch(GOOGLE_SCRIPT_URL, {
           redirect: "follow",
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: "update", docId: docId, statusKlaim: encodedStatus, nominalAdmin: nominal })
+          body: JSON.stringify(bodyData)
       });
       const result = await response.json();
       if(result.error) throw new Error(result.error);
@@ -616,11 +621,13 @@
         let card = document.createElement('div');
         let isRevisi = currIdx === -1;
         card.style.cssText = `border: ${isRevisi ? '2px solid #ef4444' : '1px solid var(--border)'}; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; ${isRevisi ? 'background:#fff5f5;' : ''}`;
+        let jumlahHari = item.jumlahHari || '-';
         card.innerHTML = `
           <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
             <div>
               <div style="font-size:0.85rem; color:var(--text-muted);">#ID: ${item.idKlaim} &bull; ${tgl}</div>
               <h4 style="margin-top:0.2rem; color:var(--text-main);">${item.kegiatan} - ${item.tujuan}</h4>
+              <div style="margin-top:0.35rem; font-size:0.9rem; color:var(--primary-dark);"><i class="fa-solid fa-calendar-days"></i> Jumlah Hari: <strong>${jumlahHari} hari</strong></div>
             </div>
              <div style="text-align:right;">
               ${currIdx===-1 
@@ -726,7 +733,7 @@
           <td>${tgl}</td>
           <td><b>${item.namaLengkap}</b><br><span style="font-size:0.8rem; color:#64748b;">${item.jabatan}</span></td>
           <td>${item.kegiatan} - ${item.tujuan}</td>
-          <td style="text-align:center; font-weight:700;">${item.jumlahHari || '-'} hari</td>
+          <td class="no-print" style="text-align:center;"><input type="number" id="hari_${item.docId}" value="${item.jumlahHari || ''}" class="form-control" style="width:70px; padding:0.2rem; text-align:center;" min="1" placeholder="-"></td>
           <td>${links}</td>
           <td><span class="badge badge-process">${currStat}</span></td>
           <td class="no-print">
@@ -756,6 +763,7 @@
       document.getElementById('loadingDiv').style.display = 'flex';
       const nStat = document.getElementById('sel_' + docId).value;
       const nNom = document.getElementById('nom_' + docId).value;
+      const nHari = document.getElementById('hari_' + docId).value;
       
       // Ambil catatan dari textarea
       let catatan = '';
@@ -770,7 +778,7 @@
       }
 
       try {
-          await window.firebaseUpdateStatus(docId, statusEncoded, nNom);
+          await window.firebaseUpdateStatus(docId, statusEncoded, nNom, nHari);
           Swal.fire('Tersimpan', 'Status Klaim Berhasil Diperbarui', 'success');
           loadAdminData();
       } catch (e) {
