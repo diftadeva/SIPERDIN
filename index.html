@@ -359,6 +359,7 @@
                 <th>Tanggal</th>
                 <th>Pemohon</th>
                 <th>Kegiatan</th>
+                <th>Jumlah Hari</th>
                 <th>Dokumen Masuk</th>
                 <th>Status / Progress Tahapan</th>
                 <th class="no-print">Action Status</th>
@@ -689,7 +690,7 @@
       tbody.innerHTML = '';
       
       if(!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Belum ada data pengajuan</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Belum ada data pengajuan</td></tr>';
         return;
       }
 
@@ -725,6 +726,7 @@
           <td>${tgl}</td>
           <td><b>${item.namaLengkap}</b><br><span style="font-size:0.8rem; color:#64748b;">${item.jabatan}</span></td>
           <td>${item.kegiatan} - ${item.tujuan}</td>
+          <td style="text-align:center; font-weight:700;">${item.jumlahHari || '-'} hari</td>
           <td>${links}</td>
           <td><span class="badge badge-process">${currStat}</span></td>
           <td class="no-print">
