@@ -116,11 +116,11 @@
           kegiatan: formData.kegiatan,
           tujuan: formData.tujuan,
           jumlahPeserta: formData.peserta,
-          jumlahHari: formData.jumlahHari,
           statusKlaim: "PJ Keuangan",
           nominalAdmin: "-",
           timestamp: new Date().toISOString(),
-          searchName: formData.nama.toLowerCase().trim()
+          searchName: formData.nama.toLowerCase().trim(),
+          jumlahHari: formData.jumlahHari
       };
 
       let filesBase64 = {};
