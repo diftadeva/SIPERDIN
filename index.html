@@ -552,16 +552,30 @@
         Swal.fire('Masukkan Nama', 'Harap isi nama Anda untuk mencari.', 'warning');
         return;
       }
-      if(!window.searchDataPegawaiFirebase) return; // if init failed
+      if(!window.fetchAdminData) return;
 
       document.getElementById('loadingDiv').style.display = 'flex';
       
       try {
-          const response = await window.searchDataPegawaiFirebase(nama);
+          // Solusi Pintar: Ambil semua data lalu filter di sisi website, 
+          // agar tidak terpengaruh oleh error kolom searchName di Spreadsheet.
+          const allData = await window.fetchAdminData();
+          const q = nama.toLowerCase();
+          
+          const filteredData = allData.filter(item => {
+             const namaPegawai = (item.namaLengkap || "").toLowerCase();
+             return namaPegawai.includes(q);
+          });
+          
+          const response = {
+             total: filteredData.length,
+             data: filteredData
+          };
+          
           renderStatusRiwayat(response);
       } catch (e) {
           document.getElementById('loadingDiv').style.display = 'none';
-          Swal.fire('Error', 'Gagal memanggil database.', 'error');
+          Swal.fire('Error', 'Gagal mencari data.', 'error');
       }
     }
 
