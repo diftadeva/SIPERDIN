@@ -148,13 +148,13 @@
 
     window.fetchAdminData = async function() {
         if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) return [];
-        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getAll");
+        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getAll&_t=" + Date.now());
         return await res.json();
     }
 
     window.searchDataPegawaiFirebase = async function(namaTujuan) {
         if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) return {total: 0, data: []};
-        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=search&nama=" + encodeURIComponent(namaTujuan));
+        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=search&nama=" + encodeURIComponent(namaTujuan) + "&_t=" + Date.now());
         return await res.json();
     }
 
