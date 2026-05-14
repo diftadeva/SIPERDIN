@@ -183,14 +183,22 @@
 
     window.fetchAdminData = async function() {
         if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) return [];
-        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getAll&_t=" + Date.now());
-        return await res.json();
+        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getAll&_t=" + Date.now(), {
+            redirect: "follow", method: "GET"
+        });
+        const text = await res.text();
+        try { return JSON.parse(text); }
+        catch(e) { throw new Error("Respons server tidak valid: " + text.substring(0,200)); }
     }
 
     window.searchDataPegawaiFirebase = async function(namaTujuan) {
         if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) return {total: 0, data: []};
-        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=search&nama=" + encodeURIComponent(namaTujuan) + "&_t=" + Date.now());
-        return await res.json();
+        const res = await fetch(GOOGLE_SCRIPT_URL + "?action=search&nama=" + encodeURIComponent(namaTujuan) + "&_t=" + Date.now(), {
+            redirect: "follow", method: "GET"
+        });
+        const text = await res.text();
+        try { return JSON.parse(text); }
+        catch(e) { throw new Error("Respons server tidak valid: " + text.substring(0,200)); }
     }
 
     window.firebaseUpdateStatus = async function(docId, encodedStatus, nominal, jumlahHari) {

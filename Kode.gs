@@ -1,27 +1,31 @@
+var SPREADSHEET_ID = "1hW3K--2YNP3YvOpefpBjutugBRIiVrC85MZM_Iv8X2M";
 var FOLDER_ID = "1VzTU37zKp8q3FuVLEAFk56gTEOL3EPFm";
 
-// Peta: nama header di spreadsheet → key payload
 var HEADER_TO_FIELD = {
-  "idKlaim": "idKlaim",       "ID Klaim": "idKlaim",
-  "timestamp": "timestamp",   "Waktu": "timestamp",
-  "namaLengkap": "namaLengkap", "Nama Pegawai": "namaLengkap",
-  "jabatan": "jabatan",       "Jabatan": "jabatan",
-  "kegiatan": "kegiatan",     "Kegiatan": "kegiatan",
-  "tujuan": "tujuan",         "Tujuan": "tujuan",
+  "idKlaim": "idKlaim",           "ID Klaim": "idKlaim",
+  "timestamp": "timestamp",       "Waktu": "timestamp",
+  "namaLengkap": "namaLengkap",   "Nama Pegawai": "namaLengkap",
+  "jabatan": "jabatan",           "Jabatan": "jabatan",
+  "kegiatan": "kegiatan",         "Kegiatan": "kegiatan",
+  "tujuan": "tujuan",             "Tujuan": "tujuan",
   "jumlahPeserta": "jumlahPeserta", "Peserta": "jumlahPeserta",
-  "jumlahHari": "jumlahHari", "Jumlah Hari": "jumlahHari", "jumlah hari": "jumlahHari",
-  "linkST": "linkST",         "Link ST": "linkST",
-  "linkSPPD": "linkSPPD",     "Link SPD / SPPD": "linkSPPD", "Link SPPD": "linkSPPD",
-  "linkHotel": "linkHotel",   "Link Hotel": "linkHotel",
-  "linkTransport": "linkTransport", "Link Transport": "linkTransport", "linkTransport": "linkTransport",
-  "linkBoardingPass": "linkBoardingPass", "Link Boarding Pass": "linkBoardingPass", "linkBoardingPas": "linkBoardingPass",
-  "linkLaporanPD": "linkLaporanPD",     "Link Laporan PD": "linkLaporanPD",
-  "statusKlaim": "statusKlaim", "Status Klaim": "statusKlaim",
-  "catatan": "catatan",       "Catatan": "catatan",
+  "jumlahHari": "jumlahHari",     "Jumlah Hari": "jumlahHari",
+  "linkST": "linkST",             "Link ST": "linkST",
+  "linkSPPD": "linkSPPD",         "Link SPD / SPPD": "linkSPPD", "Link SPPD": "linkSPPD",
+  "linkHotel": "linkHotel",       "Link Hotel": "linkHotel",
+  "linkTransport": "linkTransport", "Link Transport": "linkTransport",
+  "linkBoardingPass": "linkBoardingPass", "Link Boarding Pass": "linkBoardingPass",
+  "linkBoardingPas": "linkBoardingPass",
+  "linkLaporanPD": "linkLaporanPD", "Link Laporan PD": "linkLaporanPD",
+  "statusKlaim": "statusKlaim",   "Status Klaim": "statusKlaim",
   "nominalAdmin": "nominalAdmin", "Nominal": "nominalAdmin", "Nominal Klaim": "nominalAdmin",
-  "docId": "docId",           "Doc ID": "docId",
-  "searchName": "searchName", "Search Name": "searchName"
+  "docId": "docId",               "Doc ID": "docId",
+  "searchName": "searchName",     "Search Name": "searchName"
 };
+
+function getSheet() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
+}
 
 function findColIndex(headers, fieldName) {
   var idx = headers.indexOf(fieldName);
@@ -39,13 +43,12 @@ function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     var action = data.action;
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    var sheet = getSheet();
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
 
     if (action === "insert") {
       var payload = data.payload;
-      var files = data.files;
-
+      var files = data.files || {};
       var folder = DriveApp.getFolderById(FOLDER_ID);
       var links = {};
       var timestampStr = new Date().getTime().toString().slice(-5);
@@ -64,13 +67,13 @@ function doPost(e) {
         }
       }
 
-      payload.linkST            = links.st       || "";
-      payload.linkSPPD          = links.sppd     || "";
-      payload.linkHotel         = links.hotel    || "";
-      payload.linkTransport     = links.transport || "";
-      payload.linkBoardingPass  = links.boarding  || "";
-      payload.linkLaporanPD     = links.laporan   || "";
-      payload.docId             = new Date().getTime();
+      payload.linkST           = links.st        || "";
+      payload.linkSPPD         = links.sppd      || "";
+      payload.linkHotel        = links.hotel      || "";
+      payload.linkTransport    = links.transport  || "";
+      payload.linkBoardingPass = links.boarding   || "";
+      payload.linkLaporanPD    = links.laporan    || "";
+      payload.docId            = new Date().getTime();
 
       var newRow = [];
       for (var i = 0; i < headers.length; i++) {
@@ -89,7 +92,7 @@ function doPost(e) {
       var values     = dataRange.getValues();
       var docIdIndex = findColIndex(headers, "docId");
 
-      if (docIdIndex === -1) throw new Error("Kolom docId tidak ditemukan di header!");
+      if (docIdIndex === -1) throw new Error("Kolom docId tidak ditemukan di header spreadsheet!");
 
       var rowIndex = -1;
       for (var i = 1; i < values.length; i++) {
@@ -114,9 +117,10 @@ function doPost(e) {
         }
         response.success = true;
       } else {
-        throw new Error("Data tidak ditemukan");
+        throw new Error("Data dengan docId tersebut tidak ditemukan.");
       }
     }
+
   } catch (error) {
     response.error = error.toString();
   }
@@ -127,12 +131,11 @@ function doPost(e) {
 
 function doGet(e) {
   var action    = e.parameter.action;
-  var sheet     = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  var sheet     = getSheet();
   var dataRange = sheet.getDataRange();
   var values    = dataRange.getValues();
   var headers   = values[0];
-
-  var result = [];
+  var result    = [];
 
   if (action === "getAll") {
     for (var i = values.length - 1; i > 0; i--) {
