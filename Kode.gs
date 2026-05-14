@@ -1,7 +1,6 @@
 var FOLDER_ID = "1VzTU37zKp8q3FuVLEAFk56gTEOL3EPFm";
 
 // Peta: nama header di spreadsheet → key payload
-// Mendukung berbagai format header (camelCase maupun human-readable)
 var HEADER_TO_FIELD = {
   "idKlaim": "idKlaim",       "ID Klaim": "idKlaim",
   "timestamp": "timestamp",   "Waktu": "timestamp",
@@ -10,25 +9,23 @@ var HEADER_TO_FIELD = {
   "kegiatan": "kegiatan",     "Kegiatan": "kegiatan",
   "tujuan": "tujuan",         "Tujuan": "tujuan",
   "jumlahPeserta": "jumlahPeserta", "Peserta": "jumlahPeserta",
-  "jumlahHari": "jumlahHari", "Jumlah Hari": "jumlahHari",
+  "jumlahHari": "jumlahHari", "Jumlah Hari": "jumlahHari", "jumlah hari": "jumlahHari",
   "linkST": "linkST",         "Link ST": "linkST",
   "linkSPPD": "linkSPPD",     "Link SPD / SPPD": "linkSPPD", "Link SPPD": "linkSPPD",
   "linkHotel": "linkHotel",   "Link Hotel": "linkHotel",
-  "linkTransport": "linkTransport", "Link Transport": "linkTransport",
-  "linkBoardingPass": "linkBoardingPass", "Link Boarding Pass": "linkBoardingPass",
+  "linkTransport": "linkTransport", "Link Transport": "linkTransport", "linkTransport": "linkTransport",
+  "linkBoardingPass": "linkBoardingPass", "Link Boarding Pass": "linkBoardingPass", "linkBoardingPas": "linkBoardingPass",
   "linkLaporanPD": "linkLaporanPD",     "Link Laporan PD": "linkLaporanPD",
   "statusKlaim": "statusKlaim", "Status Klaim": "statusKlaim",
+  "catatan": "catatan",       "Catatan": "catatan",
   "nominalAdmin": "nominalAdmin", "Nominal": "nominalAdmin", "Nominal Klaim": "nominalAdmin",
   "docId": "docId",           "Doc ID": "docId",
-  "searchName": "searchName"
+  "searchName": "searchName", "Search Name": "searchName"
 };
 
-// Cari index kolom dengan berbagai kemungkinan nama header
 function findColIndex(headers, fieldName) {
-  // Cari exact match dulu
   var idx = headers.indexOf(fieldName);
   if (idx !== -1) return idx;
-  // Cari dari semua entry HEADER_TO_FIELD yang menuju fieldName
   for (var h in HEADER_TO_FIELD) {
     if (HEADER_TO_FIELD[h] === fieldName && headers.indexOf(h) !== -1) {
       return headers.indexOf(h);
@@ -67,7 +64,6 @@ function doPost(e) {
         }
       }
 
-      // Masukkan link file ke payload
       payload.linkST            = links.st       || "";
       payload.linkSPPD          = links.sppd     || "";
       payload.linkHotel         = links.hotel    || "";
@@ -76,7 +72,6 @@ function doPost(e) {
       payload.linkLaporanPD     = links.laporan   || "";
       payload.docId             = new Date().getTime();
 
-      // Build baris sesuai urutan header di spreadsheet
       var newRow = [];
       for (var i = 0; i < headers.length; i++) {
         var headerName = headers[i];
@@ -145,7 +140,6 @@ function doGet(e) {
       for (var j = 0; j < headers.length; j++) {
         var hdr       = headers[j];
         var fieldName = HEADER_TO_FIELD[hdr] || hdr;
-        // Simpan dengan KEDUA nama: header asli & canonical fieldName
         rowObj[hdr]       = values[i][j];
         rowObj[fieldName] = values[i][j];
       }
