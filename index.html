@@ -158,14 +158,17 @@
         return await res.json();
     }
 
-    window.firebaseUpdateStatus = async function(docId, encodedStatus, nominal) {
+    window.firebaseUpdateStatus = async function(docId, encodedStatus, nominal, jumlahHari) {
       if(GOOGLE_SCRIPT_URL.includes("ISI_URL")) throw new Error("Link Google Sheets Apps Script belum diisi!");
+      
+      const body = { action: "update", docId: docId, statusKlaim: encodedStatus, nominalAdmin: nominal };
+      if(jumlahHari !== undefined && jumlahHari !== '') body.jumlahHari = jumlahHari;
       
       const response = await fetch(GOOGLE_SCRIPT_URL, {
           redirect: "follow",
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: "update", docId: docId, statusKlaim: encodedStatus, nominalAdmin: nominal })
+          body: JSON.stringify(body)
       });
       const result = await response.json();
       if(result.error) throw new Error(result.error);
@@ -203,6 +206,7 @@
       <div class="submenu-tabs no-print">
         <button class="sub-tab-btn active" onclick="switchSubMenu('form')" id="subForm">1. Form Pengajuan Klaim</button>
         <button class="sub-tab-btn" onclick="switchSubMenu('status')" id="subStatus">2. Status Pengajuan Klaim</button>
+        <button class="sub-tab-btn" onclick="switchSubMenu('dashboard')" id="subDashboard">3. Dashboard Semua Pegawai</button>
       </div>
 
       <!-- Submenu 1: Form Pengajuan -->
@@ -342,7 +346,7 @@
           <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:1rem;">Silakan cari menggunakan Nama Lengkap Anda untuk melihat status klaim yang pernah diajukan.</p>
           
           <div class="search-box">
-            <input type="text" id="searchNamaPgw" class="form-control" placeholder="Masukkan Nama Lengkap Anda...">
+            <input type="text" id="searchNamaPgw" class="form-control" placeholder="Masukkan Nama Lengkap Anda..." onkeydown="if(event.key==='Enter') cariStatusPegawai()">
             <button class="btn btn-primary" onclick="cariStatusPegawai()"><i class="fa-solid fa-search"></i> Cari Data</button>
           </div>
           <div id="refreshStatusArea" style="display:none; margin-bottom:1rem;">
@@ -355,9 +359,25 @@
               <p style="font-size:0.9rem; opacity:0.9;">Total Pengajuan Klaim: <b id="resTotal">0</b> pengajuan klaim</p>
             </div>
 
-            <div id="resList">
-            </div>
+            <div id="resList"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Submenu 3: Dashboard Semua Pegawai -->
+      <div id="viewPegawaiDashboard" style="display:none;">
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-chart-bar"></i> Dashboard Progress Semua Pegawai</div>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;"><i class="fa-solid fa-circle-info"></i> Menampilkan status proses klaim perjalanan dinas seluruh pegawai secara real-time.</p>
+          <div style="margin-bottom:1rem; display:flex; gap:0.5rem; align-items:center;">
+            <div style="flex:1; position:relative;">
+              <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:0.85rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.9rem;"></i>
+              <input type="text" id="dashSearchInput" class="form-control" placeholder="Filter nama pegawai..." oninput="filterDashboard(this.value)" style="padding-left:2.5rem; border-radius:30px;"/>
+            </div>
+            <button class="btn btn-primary" onclick="loadDashboard()" style="border-radius:30px;"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+          </div>
+          <div id="dashboardList"><div style="text-align:center; padding:2rem; color:var(--text-muted);">Klik Refresh untuk memuat data...</div></div>
+        </div>
         </div>
       </div>
     </div> <!-- /VIEW PEGAWAI WRAPPER -->
@@ -473,11 +493,20 @@
       if(tab === 'admin') loadAdminData();
     }
 
+    // Helper: baca field dari item dengan dukungan multi-key (camelCase & human-readable)
+    function gv(item, ...keys) {
+      for(const k of keys) { if(item[k] !== undefined && item[k] !== '') return item[k]; }
+      return '';
+    }
+
     function switchSubMenu(sub) {
       document.getElementById('viewPegawaiForm').style.display = sub === 'form' ? 'block' : 'none';
       document.getElementById('viewPegawaiStatus').style.display = sub === 'status' ? 'block' : 'none';
+      document.getElementById('viewPegawaiDashboard').style.display = sub === 'dashboard' ? 'block' : 'none';
       document.getElementById('subForm').classList.toggle('active', sub === 'form');
       document.getElementById('subStatus').classList.toggle('active', sub === 'status');
+      document.getElementById('subDashboard').classList.toggle('active', sub === 'dashboard');
+      if(sub === 'dashboard') loadDashboard();
     }
 
     function toggleUpload(type) {
@@ -642,55 +671,54 @@
       }
 
       response.data.forEach(item => {
-        let dateObj = new Date(item.timestamp);
-        let tgl = isNaN(dateObj) ? item.timestamp : dateObj.toLocaleDateString('id-ID');
-        let statusBaru = item.statusKlaim || "PJ Keuangan";
-        // Decode catatan dari statusKlaim jika ada (format: "Status||catatan")
+        const tsCand = [item.timestamp, item.Waktu];
+        let tgl = '-';
+        for(const ts of tsCand){ const d=new Date(ts); if(!isNaN(d)){ tgl=d.toLocaleDateString('id-ID'); break; } }
+
+        const idKlaim  = gv(item,'idKlaim','ID Klaim');
+        const kegiatan = gv(item,'kegiatan','Kegiatan');
+        const tujuan   = gv(item,'tujuan','Tujuan');
+        const hari     = gv(item,'jumlahHari','Jumlah Hari');
+        let statusBaru = gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan';
+        let nominal    = gv(item,'nominalAdmin','Nominal','Nominal Klaim') || '-';
+
         let catatanRevisi = '';
-        if (statusBaru.includes('||')) {
+        if(statusBaru.includes('||')) {
           const parts = statusBaru.split('||');
           statusBaru = parts[0].trim();
           catatanRevisi = parts[1] ? parts[1].trim() : '';
-        } else {
-          catatanRevisi = item.catatanRevisi || '';
         }
-        let nominal = item.nominalAdmin || "-";
         let nominalFormatted = formatRupiah(nominal);
-        
         let currIdx = STATUS_FLOW.indexOf(statusBaru);
         if(statusBaru.toLowerCase().includes('revisi')) currIdx = -1;
 
         let flowHtml = '';
         STATUS_FLOW.forEach((stepName, idx) => {
-          let activeClass = idx <= currIdx ? 'active' : '';
-          flowHtml += `<div class="flow-step ${activeClass}"><div class="step-circle"><i class="fa-solid fa-check"></i></div><div class="step-label">${stepName}</div></div>`;
+          flowHtml += `<div class="flow-step ${idx<=currIdx?'active':''}"><div class="step-circle"><i class="fa-solid fa-check"></i></div><div class="step-label">${stepName}</div></div>`;
         });
 
         let card = document.createElement('div');
         let isRevisi = currIdx === -1;
-        card.style.cssText = `border: ${isRevisi ? '2px solid #ef4444' : '1px solid var(--border)'}; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; ${isRevisi ? 'background:#fff5f5;' : ''}`;
+        card.style.cssText = `border:${isRevisi?'2px solid #ef4444':'1px solid var(--border)'}; border-radius:8px; padding:1.5rem; margin-bottom:1.5rem; ${isRevisi?'background:#fff5f5;':''}`;
         card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem; border-bottom:1px solid #e2e8f0; padding-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
             <div>
-              <div style="font-size:0.85rem; color:var(--text-muted);">#ID: ${item.idKlaim} &bull; ${tgl}</div>
-              <h4 style="margin-top:0.2rem; color:var(--text-main);">${item.kegiatan} - ${item.tujuan}</h4>
+              <div style="font-size:0.85rem; color:var(--text-muted);">#ID: ${idKlaim} &bull; ${tgl}</div>
+              <h4 style="margin-top:0.2rem; color:var(--text-main);">${kegiatan} - ${tujuan}</h4>
+              ${hari ? `<div style="margin-top:0.25rem; font-size:0.85rem; color:var(--text-muted);"><i class="fa-solid fa-calendar-days"></i> Jumlah Hari: <strong style="color:var(--primary-darker);">${hari} hari</strong></div>` : ''}
             </div>
-             <div style="text-align:right;">
-              ${currIdx===-1 
-                ? `<span style="font-size:1rem; font-weight:700; color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> Revisi Data / Berkas Ditolak</span>`
-                : `<span class="badge badge-process">${statusBaru}</span>`
-              }
-             <div style="margin-top:0.5rem; font-size:0.9rem;">Nominal Disetujui: <strong style="color:var(--success);">Rp ${nominalFormatted}</strong></div>
+            <div style="text-align:right;">
+              ${currIdx===-1
+                ? `<span style="font-size:1rem; font-weight:700; color:#ef4444;"><i class="fa-solid fa-circle-xmark"></i> Revisi / Ditolak</span>`
+                : `<span class="badge badge-process">${statusBaru}</span>`}
+              <div style="margin-top:0.5rem; font-size:0.9rem;">Nominal: <strong style="color:var(--success);">Rp ${nominalFormatted}</strong></div>
             </div>
           </div>
-          <div class="flow-container" style="margin-top:1rem;">
-            ${flowHtml}
-          </div>
-          ${currIdx === -1 ? `
-            <div style="margin-top:1.25rem; background:#fee2e2; border-left:5px solid #ef4444; padding:1rem 1.25rem; border-radius:6px;">
-              <div style="font-size:1rem; font-weight:700; color:#991b1b; margin-bottom:0.5rem;"><i class="fa-solid fa-circle-exclamation"></i> Alasan Revisi / Penolakan:</div>
-              <div style="font-size:0.95rem; color:#7f1d1d;">${catatanRevisi.trim() !== '' ? catatanRevisi : '<em>Belum ada catatan dari Admin. Silakan hubungi bagian keuangan untuk informasi lebih lanjut.</em>'}</div>
-            </div>` : ''}
+          <div class="flow-container" style="margin-top:1rem;">${flowHtml}</div>
+          ${currIdx===-1?`<div style="margin-top:1.25rem; background:#fee2e2; border-left:5px solid #ef4444; padding:1rem 1.25rem; border-radius:6px;">
+            <div style="font-size:1rem; font-weight:700; color:#991b1b; margin-bottom:0.5rem;"><i class="fa-solid fa-circle-exclamation"></i> Alasan Revisi:</div>
+            <div style="font-size:0.95rem; color:#7f1d1d;">${catatanRevisi||'<em>Belum ada catatan. Hubungi bagian keuangan.</em>'}</div>
+          </div>`:''}
         `;
         list.appendChild(card);
       });
@@ -725,9 +753,9 @@
         return;
       }
       const filtered = _allAdminData.filter(item => {
-        const nama = (item.namaLengkap || item.searchName || '').toLowerCase();
-        const jabatan = (item.jabatan || '').toLowerCase();
-        const kegiatan = (item.kegiatan || '').toLowerCase();
+        const nama = (gv(item,'namaLengkap','Nama Pegawai','searchName')).toLowerCase();
+        const jabatan = (gv(item,'jabatan','Jabatan')).toLowerCase();
+        const kegiatan = (gv(item,'kegiatan','Kegiatan')).toLowerCase();
         return nama.includes(q) || jabatan.includes(q) || kegiatan.includes(q);
       });
       renderAdminTable(filtered);
@@ -749,50 +777,63 @@
 
       data.forEach(item => {
         let tr = document.createElement('tr');
-        
-        let dateObj = new Date(item.timestamp);
-        let tgl = isNaN(dateObj) ? item.timestamp : dateObj.toLocaleDateString('id-ID');
+
+        const tsCandidates = [item.timestamp, item.Waktu];
+        let tgl = '-';
+        for(const ts of tsCandidates) { const d = new Date(ts); if(!isNaN(d)) { tgl = d.toLocaleDateString('id-ID'); break; } }
+
+        const nama    = gv(item,'namaLengkap','Nama Pegawai');
+        const jabatan = gv(item,'jabatan','Jabatan');
+        const kegiatan= gv(item,'kegiatan','Kegiatan');
+        const tujuan  = gv(item,'tujuan','Tujuan');
+        const hari    = gv(item,'jumlahHari','Jumlah Hari') || '-';
+        const docId   = gv(item,'docId','Doc ID');
+        const linkST  = gv(item,'linkST','Link ST');
+        const linkSPD = gv(item,'linkSPPD','Link SPD / SPPD','Link SPPD');
+        const linkHtl = gv(item,'linkHotel','Link Hotel');
+        const linkTrp = gv(item,'linkTransport','Link Transport');
+        const linkBP  = gv(item,'linkBoardingPass','Link Boarding Pass');
+        const linkLpd = gv(item,'linkLaporanPD','Link Laporan PD');
+        const nomAdm  = gv(item,'nominalAdmin','Nominal','Nominal Klaim');
 
         let links = '';
-        if(item.linkST) links += `<a href="${item.linkST}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-pdf"></i> Lihat ST</a>`;
-        if(item.linkSPPD) links += `<a href="${item.linkSPPD}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-signature"></i> Lihat SPPD</a>`;
-        if(item.linkHotel) links += `<a href="${item.linkHotel}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-hotel"></i> Lihat Hotel</a>`;
-        if(item.linkTransport) links += `<a href="${item.linkTransport}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-car"></i> Lihat Transport</a>`;
-        if(item.linkBoardingPass) links += `<a href="${item.linkBoardingPass}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-ticket"></i> Lihat Boarding Pass</a>`;
-        if(item.linkLaporanPD) links += `<a href="${item.linkLaporanPD}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block;"><i class="fa-solid fa-file-lines"></i> Lihat Laporan PD</a>`;
+        if(linkST)  links += `<a href="${linkST}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-pdf"></i> Lihat ST</a>`;
+        if(linkSPD) links += `<a href="${linkSPD}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-signature"></i> Lihat SPPD</a>`;
+        if(linkHtl) links += `<a href="${linkHtl}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-hotel"></i> Lihat Hotel</a>`;
+        if(linkTrp) links += `<a href="${linkTrp}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-car"></i> Lihat Transport</a>`;
+        if(linkBP)  links += `<a href="${linkBP}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-ticket"></i> Lihat Boarding Pass</a>`;
+        if(linkLpd) links += `<a href="${linkLpd}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block;"><i class="fa-solid fa-file-lines"></i> Lihat Laporan PD</a>`;
 
-        let currStat = item.statusKlaim || "PJ Keuangan";
-        // Decode catatan dari statusKlaim jika ada (format: "Status||catatan")
+        let currStat = gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan';
         let catatanTersimpan = '';
-        if (currStat.includes('||')) {
+        if(currStat.includes('||')) {
           const parts = currStat.split('||');
           currStat = parts[0].trim();
           catatanTersimpan = parts[1] ? parts[1].trim() : '';
-        } else {
-          catatanTersimpan = item.catatanRevisi || '';
         }
         let optHtml = `<option value="Revisi Data/Berkas Ditolak">Revisi / Tolak</option>`;
         STATUS_FLOW.forEach(s => {
-          let sel = (s === currStat) ? "selected" : "";
-          optHtml += `<option value="${s}" ${sel}>${s}</option>`;
+          optHtml += `<option value="${s}" ${s===currStat?'selected':''}>${s}</option>`;
         });
 
         tr.innerHTML = `
           <td>${tgl}</td>
-          <td><b>${item.namaLengkap}</b><br><span style="font-size:0.8rem; color:#64748b;">${item.jabatan}</span></td>
-          <td>${item.kegiatan} - ${item.tujuan}</td>
-          <td style="text-align:center; font-weight:700;">${item.jumlahHari || '-'} hari</td>
-          <td>${links}</td>
+          <td><b>${nama}</b><br><span style="font-size:0.8rem; color:#64748b;">${jabatan}</span></td>
+          <td>${kegiatan} - ${tujuan}</td>
+          <td style="text-align:center;">
+            <input type="number" id="hari_${docId}" value="${hari === '-' ? '' : hari}" class="form-control" style="width:70px; padding:0.25rem; text-align:center; font-weight:700;" placeholder="-" min="1">
+          </td>
+          <td>${links || '<span style="color:#94a3b8; font-size:0.8rem;">—</span>'}</td>
           <td><span class="badge badge-process">${currStat}</span></td>
           <td class="no-print">
-            <select id="sel_${item.docId}" class="form-control" style="width:160px; padding:0.2rem;" onchange="toggleCatatanRevisi('${item.docId}', this.value)">${optHtml}</select>
-            <div id="catatan_${item.docId}" style="display:${currStat.includes('Revisi') ? 'block' : 'none'}; margin-top:0.5rem;">
-              <textarea class="form-control catatan-textarea" data-docid="${item.docId}" rows="2" placeholder="Tuliskan alasan revisi/penolakan..." style="font-size:0.8rem;">${catatanTersimpan}</textarea>
+            <select id="sel_${docId}" class="form-control" style="width:160px; padding:0.2rem;" onchange="toggleCatatanRevisi('${docId}', this.value)">${optHtml}</select>
+            <div id="catatan_${docId}" style="display:${currStat.includes('Revisi')?'block':'none'}; margin-top:0.5rem;">
+              <textarea class="form-control catatan-textarea" data-docid="${docId}" rows="2" placeholder="Alasan revisi..." style="font-size:0.8rem;">${catatanTersimpan}</textarea>
             </div>
           </td>
-          <td class="no-print"><input type="number" id="nom_${item.docId}" value="${item.nominalAdmin == '-' ? '' : item.nominalAdmin}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
-          <td class="no-print"><button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="simpanRow('${item.docId}')"><i class="fa-solid fa-save"></i></button></td>
-          <td class="no-print"><button class="btn" style="padding:0.4rem 0.8rem; font-size:0.85rem; background:#475569; color:white;" onclick="downloadDokumen('${item.docId}', '${item.namaLengkap}', '${tgl}', '${item.kegiatan}', '${item.tujuan}', '${item.jabatan}', '${currStat}', '${item.nominalAdmin}', '${item.linkST||''}', '${item.linkSPPD||''}', '${item.linkHotel||''}', '${item.linkTransport||''}', '${item.linkBoardingPass||''}', '${item.linkLaporanPD||''}')"><i class="fa-solid fa-download"></i></button></td>
+          <td class="no-print"><input type="number" id="nom_${docId}" value="${nomAdm === '-' ? '' : nomAdm}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
+          <td class="no-print"><button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="simpanRow('${docId}')"><i class="fa-solid fa-save"></i></button></td>
+          <td class="no-print"><button class="btn" style="padding:0.4rem 0.8rem; font-size:0.85rem; background:#475569; color:white;" onclick="downloadDokumen('${docId}','${nama.replace(/'/g,"\'")}','${tgl}','${kegiatan}','${tujuan}','${jabatan}','${currStat}','${nomAdm}','${linkST}','${linkSPD}','${linkHtl}','${linkTrp}','${linkBP}','${linkLpd}')"><i class="fa-solid fa-download"></i></button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -824,8 +865,10 @@
         statusEncoded = nStat + '||' + catatan;
       }
 
+      const nHari = document.getElementById('hari_' + docId) ? document.getElementById('hari_' + docId).value : '';
+
       try {
-          await window.firebaseUpdateStatus(docId, statusEncoded, nNom);
+          await window.firebaseUpdateStatus(docId, statusEncoded, nNom, nHari);
           Swal.fire('Tersimpan', 'Status Klaim Berhasil Diperbarui', 'success');
           loadAdminData();
       } catch (e) {
@@ -886,6 +929,121 @@
       setTimeout(() => { printWin.print(); }, 500);
     }
 
+    // ---- DASHBOARD SEMUA PEGAWAI ----
+    let _allDashData = [];
+
+    async function loadDashboard() {
+      if(!window.fetchAdminData) return;
+      document.getElementById('loadingDiv').style.display = 'flex';
+      try {
+        const data = await window.fetchAdminData();
+        _allDashData = data || [];
+        document.getElementById('dashSearchInput').value = '';
+        renderDashboard(_allDashData);
+      } catch(e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        Swal.fire('Error', 'Gagal memuat data dashboard.', 'error');
+      }
+    }
+
+    function filterDashboard(keyword) {
+      const q = keyword.trim().toLowerCase();
+      if(!q) { renderDashboard(_allDashData); return; }
+      const filtered = _allDashData.filter(item => {
+        const nama = gv(item,'namaLengkap','Nama Pegawai','searchName').toLowerCase();
+        const kegiatan = gv(item,'kegiatan','Kegiatan').toLowerCase();
+        return nama.includes(q) || kegiatan.includes(q);
+      });
+      renderDashboard(filtered);
+    }
+
+    function renderDashboard(data) {
+      document.getElementById('loadingDiv').style.display = 'none';
+      const container = document.getElementById('dashboardList');
+
+      if(!data || data.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted); border:1px dashed var(--border); border-radius:8px;">Belum ada data pengajuan klaim.</div>`;
+        return;
+      }
+
+      // Ringkasan statistik
+      const total = data.length;
+      const selesai = data.filter(i => (gv(i,'statusKlaim','Status Klaim')||'').includes('Selesai')).length;
+      const proses  = data.filter(i => !(gv(i,'statusKlaim','Status Klaim')||'').includes('Selesai') && !(gv(i,'statusKlaim','Status Klaim')||'').toLowerCase().includes('revisi')).length;
+      const revisi  = data.filter(i => (gv(i,'statusKlaim','Status Klaim')||'').toLowerCase().includes('revisi')).length;
+
+      let html = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0.75rem; margin-bottom:1.5rem;">
+          <div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:white; padding:1rem; border-radius:10px; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:800;">${total}</div><div style="font-size:0.8rem; opacity:0.9;">Total Pengajuan</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#10b981,#059669); color:white; padding:1rem; border-radius:10px; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:800;">${selesai}</div><div style="font-size:0.8rem; opacity:0.9;">Selesai</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; padding:1rem; border-radius:10px; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:800;">${proses}</div><div style="font-size:0.8rem; opacity:0.9;">Sedang Proses</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#ef4444,#dc2626); color:white; padding:1rem; border-radius:10px; text-align:center;">
+            <div style="font-size:1.8rem; font-weight:800;">${revisi}</div><div style="font-size:0.8rem; opacity:0.9;">Revisi / Ditolak</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+      `;
+
+      data.forEach(item => {
+        const nama     = gv(item,'namaLengkap','Nama Pegawai') || '-';
+        const jabatan  = gv(item,'jabatan','Jabatan') || '';
+        const kegiatan = gv(item,'kegiatan','Kegiatan') || '-';
+        const tujuan   = gv(item,'tujuan','Tujuan') || '';
+        const hari     = gv(item,'jumlahHari','Jumlah Hari') || '-';
+        const nominal  = gv(item,'nominalAdmin','Nominal') || '-';
+
+        const tsCand = [item.timestamp, item.Waktu];
+        let tgl = '-';
+        for(const ts of tsCand){ const d=new Date(ts); if(!isNaN(d)){ tgl=d.toLocaleDateString('id-ID'); break; } }
+
+        let rawStat = gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan';
+        let stat = rawStat.includes('||') ? rawStat.split('||')[0].trim() : rawStat;
+        const isRevisi = stat.toLowerCase().includes('revisi');
+        const isDone   = stat === 'Selesai';
+
+        const currIdx = STATUS_FLOW.indexOf(stat);
+        const pct = isDone ? 100 : (currIdx >= 0 ? Math.round(((currIdx+1)/STATUS_FLOW.length)*100) : 0);
+
+        let badgeStyle, badgeText;
+        if(isRevisi)     { badgeStyle='background:#fee2e2; color:#991b1b;'; badgeText='⚠ Revisi'; }
+        else if(isDone)  { badgeStyle='background:#d1fae5; color:#065f46;'; badgeText='✓ Selesai'; }
+        else             { badgeStyle='background:#fef3c7; color:#92400e;'; badgeText='⏳ ' + stat; }
+
+        const barColor = isRevisi ? '#ef4444' : isDone ? '#10b981' : '#00b4d8';
+
+        html += `
+          <div style="background:white; border:1px solid var(--border); border-left:4px solid ${barColor}; border-radius:10px; padding:1rem 1.25rem; transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+              <div>
+                <div style="font-weight:700; font-size:0.95rem; color:var(--text-main);">${nama}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">${jabatan} &bull; ${tgl}</div>
+                <div style="font-size:0.82rem; color:var(--text-main); margin-top:0.2rem;">${kegiatan}${tujuan ? ' — '+tujuan : ''}</div>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
+                <span style="font-size:0.72rem; font-weight:700; padding:3px 10px; border-radius:20px; ${badgeStyle}">${badgeText}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-calendar-days"></i> ${hari} hari</span>
+                ${nominal !== '-' && nominal ? `<span style="font-size:0.75rem; color:var(--success); font-weight:700;">Rp ${formatRupiah(nominal)}</span>` : ''}
+              </div>
+            </div>
+            <div style="background:#e2e8f0; border-radius:20px; height:6px; overflow:hidden;">
+              <div style="background:${barColor}; height:100%; width:${pct}%; border-radius:20px; transition:width 0.5s;"></div>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem; text-align:right;">${pct}% — ${isRevisi ? 'Perlu Revisi' : stat}</div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+    // ---- END DASHBOARD ----
+
     switchSubMenu('form');
   </script>
 
@@ -894,7 +1052,7 @@
     <span style="font-weight:700; color:var(--primary-darker);">SIPERDIN BBPK Jakarta</span>
     &nbsp;·&nbsp; Sistem Informasi Perjalanan Dinas
     &nbsp;·&nbsp; <span style="font-weight:700; background:linear-gradient(135deg,var(--lime),var(--lime-dark)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">v1.0.1</span>
-    &nbsp;·&nbsp; Patch: Boarding Pass, Laporan PD, Contoh Dokumen SPD
+    &nbsp;·&nbsp; Patch: Boarding Pass, Laporan PD, Contoh SPD, Dashboard, Jumlah Hari, DB Fix
   </div>
 </body>
 </html>
