@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SIPERDIN BBPK Jakarta - Vercel Edition</title>
+  <title>SIPERDIN BBPK Jakarta - v1.0.1</title>
   
   <!-- Google Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -186,7 +186,7 @@
     <div class="logo">
       <i class="fa-solid fa-plane-departure"></i>
       <div>
-        <div>SIPERDIN BBPK Jakarta</div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">SIPERDIN BBPK Jakarta <span style="font-size:0.65rem; font-weight:800; background:linear-gradient(135deg,var(--lime),var(--lime-dark)); color:#1a3a00; padding:2px 8px; border-radius:20px; letter-spacing:0.5px;">v1.0.1</span></div>
         <div style="font-size:0.85rem; font-weight:700; color:var(--primary-darker); margin-top:-1px; letter-spacing:0.5px;">Sistem Informasi Perjalanan Dinas</div>
       </div>
     </div>
@@ -255,9 +255,12 @@
             </div>
 
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
-              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; flex-wrap:wrap;">
                 <input type="checkbox" id="chk_sppd" onchange="toggleUpload('sppd'); checkFormValid()" style="width:18px;height:18px;cursor:pointer;">
                 <label for="chk_sppd" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-file-signature" style="color:#2563eb;"></i> SPD <span class="tag-wajib">Wajib</span></label>
+                <a href="https://docs.google.com/spreadsheets/d/1fOcy4K9__LagD7YDbICsZxEh9R9tI988UzDrtpsbOeE/edit?gid=1998548671#gid=1998548671" target="_blank" style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem; font-weight:700; color:#2563eb; background:#dbeafe; border:1px solid #93c5fd; border-radius:20px; padding:3px 10px; text-decoration:none; transition:all 0.2s;" onmouseover="this.style.background='#bfdbfe'" onmouseout="this.style.background='#dbeafe'">
+                  <i class="fa-solid fa-eye"></i> Lihat Contoh Dokumen SPD
+                </a>
               </div>
               <div id="upload_sppd" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
                 <div class="file-input-wrapper" style="max-width:300px;">
@@ -291,6 +294,37 @@
                 <div class="file-input-wrapper" style="max-width:300px;">
                   <span style="font-size:0.85rem; color:var(--text-muted);" id="lbl-trans"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
                   <input type="file" id="file_trans" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-trans')">
+                </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:0.35rem;"><i class="fa-solid fa-circle-info"></i> Format: PDF / Gambar &bull; Maks. 2 MB</div>
+              </div>
+            </div>
+
+            <div style="background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="chk_boarding" onchange="toggleUpload('boarding')" style="width:18px;height:18px;cursor:pointer;">
+                <label for="chk_boarding" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-ticket" style="color:#64748b;"></i> Boarding Pass <span style="font-size:0.7rem; color:#64748b;">(Opsional)</span></label>
+              </div>
+              <div id="upload_boarding" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
+                <div class="file-input-wrapper" style="max-width:300px;">
+                  <span style="font-size:0.85rem; color:var(--text-muted);" id="lbl-boarding"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                  <input type="file" id="file_boarding" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-boarding')">
+                </div>
+                <div style="font-size:0.75rem; color:#64748b; margin-top:0.35rem;"><i class="fa-solid fa-circle-info"></i> Format: PDF / Gambar &bull; Maks. 2 MB</div>
+              </div>
+            </div>
+
+            <div style="background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; flex-wrap:wrap;">
+                <input type="checkbox" id="chk_laporan" onchange="toggleUpload('laporan')" style="width:18px;height:18px;cursor:pointer;">
+                <label for="chk_laporan" style="font-weight:600; cursor:pointer;"><i class="fa-solid fa-file-lines" style="color:#64748b;"></i> Laporan Perjalanan Dinas <span style="font-size:0.7rem; color:#64748b;">(Opsional)</span></label>
+                <a href="https://docs.google.com/document/d/1ZilSavwVG1nWssfJm0SccjsSD2ALWqQ15ercOgqldvE/edit?tab=t.0" target="_blank" style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem; font-weight:700; color:#7c3aed; background:#ede9fe; border:1px solid #c4b5fd; border-radius:20px; padding:3px 10px; text-decoration:none; transition:all 0.2s;" onmouseover="this.style.background='#ddd6fe'" onmouseout="this.style.background='#ede9fe'">
+                  <i class="fa-solid fa-eye"></i> Lihat Contoh Laporan PD
+                </a>
+              </div>
+              <div id="upload_laporan" style="display:none; margin-left:2.5rem; margin-top:0.5rem;">
+                <div class="file-input-wrapper" style="max-width:300px;">
+                  <span style="font-size:0.85rem; color:var(--text-muted);" id="lbl-laporan"><i class="fa-solid fa-upload"></i> Unggah Dokumen</span>
+                  <input type="file" id="file_laporan" accept=".pdf,image/*" onchange="updateFileName(this, 'lbl-laporan')">
                 </div>
                 <div style="font-size:0.75rem; color:#64748b; margin-top:0.35rem;"><i class="fa-solid fa-circle-info"></i> Format: PDF / Gambar &bull; Maks. 2 MB</div>
               </div>
@@ -516,7 +550,9 @@
         st: document.getElementById('file_st').files[0],
         sppd: document.getElementById('file_sppd').files[0],
         hotel: document.getElementById('file_hotel').files[0],
-        transport: document.getElementById('file_trans').files[0]
+        transport: document.getElementById('file_trans').files[0],
+        boarding: document.getElementById('file_boarding').files[0],
+        laporan: document.getElementById('file_laporan').files[0]
       };
 
       try {
@@ -529,9 +565,12 @@
             icon: 'success'
         }).then(() => {
             document.getElementById('formKlaim').reset();
-            ['lbl-st', 'lbl-sppd', 'lbl-hotel', 'lbl-trans'].forEach(id => {
-                let text = (id==='lbl-hotel' || id==='lbl-trans') ? '(Opsional)' : '';
+            ['lbl-st', 'lbl-sppd', 'lbl-hotel', 'lbl-trans', 'lbl-boarding', 'lbl-laporan'].forEach(id => {
+                let text = (id==='lbl-hotel' || id==='lbl-trans' || id==='lbl-boarding' || id==='lbl-laporan') ? '(Opsional)' : '';
                 document.getElementById(id).innerHTML = `<i class="fa-solid fa-upload"></i> Unggah Dokumen ${text}`;
+            });
+            ['upload_boarding', 'upload_laporan', 'upload_hotel', 'upload_trans'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
             });
             checkFormValid();
             switchSubMenu('status');
@@ -718,7 +757,9 @@
         if(item.linkST) links += `<a href="${item.linkST}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-pdf"></i> Lihat ST</a>`;
         if(item.linkSPPD) links += `<a href="${item.linkSPPD}" target="_blank" style="color:var(--primary); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-file-signature"></i> Lihat SPPD</a>`;
         if(item.linkHotel) links += `<a href="${item.linkHotel}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-hotel"></i> Lihat Hotel</a>`;
-        if(item.linkTransport) links += `<a href="${item.linkTransport}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block;"><i class="fa-solid fa-car"></i> Lihat Transport</a>`;
+        if(item.linkTransport) links += `<a href="${item.linkTransport}" target="_blank" style="color:var(--success); font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-car"></i> Lihat Transport</a>`;
+        if(item.linkBoardingPass) links += `<a href="${item.linkBoardingPass}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-ticket"></i> Lihat Boarding Pass</a>`;
+        if(item.linkLaporanPD) links += `<a href="${item.linkLaporanPD}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block;"><i class="fa-solid fa-file-lines"></i> Lihat Laporan PD</a>`;
 
         let currStat = item.statusKlaim || "PJ Keuangan";
         // Decode catatan dari statusKlaim jika ada (format: "Status||catatan")
@@ -751,7 +792,7 @@
           </td>
           <td class="no-print"><input type="number" id="nom_${item.docId}" value="${item.nominalAdmin == '-' ? '' : item.nominalAdmin}" class="form-control" style="width:110px; padding:0.2rem;" placeholder="Isi angka..."></td>
           <td class="no-print"><button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="simpanRow('${item.docId}')"><i class="fa-solid fa-save"></i></button></td>
-          <td class="no-print"><button class="btn" style="padding:0.4rem 0.8rem; font-size:0.85rem; background:#475569; color:white;" onclick="downloadDokumen('${item.docId}', '${item.namaLengkap}', '${tgl}', '${item.kegiatan}', '${item.tujuan}', '${item.jabatan}', '${currStat}', '${item.nominalAdmin}', '${item.linkST||''}', '${item.linkSPPD||''}', '${item.linkHotel||''}', '${item.linkTransport||''}')"><i class="fa-solid fa-download"></i></button></td>
+          <td class="no-print"><button class="btn" style="padding:0.4rem 0.8rem; font-size:0.85rem; background:#475569; color:white;" onclick="downloadDokumen('${item.docId}', '${item.namaLengkap}', '${tgl}', '${item.kegiatan}', '${item.tujuan}', '${item.jabatan}', '${currStat}', '${item.nominalAdmin}', '${item.linkST||''}', '${item.linkSPPD||''}', '${item.linkHotel||''}', '${item.linkTransport||''}', '${item.linkBoardingPass||''}', '${item.linkLaporanPD||''}')"><i class="fa-solid fa-download"></i></button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -793,12 +834,14 @@
       }
     }
 
-    function downloadDokumen(docId, nama, tgl, kegiatan, tujuan, jabatan, status, nominal, linkST, linkSPPD, linkHotel, linkTransport) {
+    function downloadDokumen(docId, nama, tgl, kegiatan, tujuan, jabatan, status, nominal, linkST, linkSPPD, linkHotel, linkTransport, linkBoardingPass, linkLaporanPD) {
       let dokLinks = '';
       if(linkST) dokLinks += `<li><a href="${linkST}" target="_blank">📄 Surat Tugas</a></li>`;
       if(linkSPPD) dokLinks += `<li><a href="${linkSPPD}" target="_blank">📋 SPD/SPPD</a></li>`;
       if(linkHotel) dokLinks += `<li><a href="${linkHotel}" target="_blank">🏨 Kwitansi Hotel</a></li>`;
       if(linkTransport) dokLinks += `<li><a href="${linkTransport}" target="_blank">🚗 Kwitansi Transport</a></li>`;
+      if(linkBoardingPass) dokLinks += `<li><a href="${linkBoardingPass}" target="_blank">🎫 Boarding Pass</a></li>`;
+      if(linkLaporanPD) dokLinks += `<li><a href="${linkLaporanPD}" target="_blank">📝 Laporan Perjalanan Dinas</a></li>`;
 
       const htmlContent = `
         <html><head><meta charset="UTF-8">
@@ -845,5 +888,13 @@
 
     switchSubMenu('form');
   </script>
+
+  <!-- Footer Version Info -->
+  <div style="text-align:center; padding:1.25rem; font-size:0.78rem; color:var(--text-muted); border-top:1px solid var(--border); margin-top:1rem; background:#fff;">
+    <span style="font-weight:700; color:var(--primary-darker);">SIPERDIN BBPK Jakarta</span>
+    &nbsp;·&nbsp; Sistem Informasi Perjalanan Dinas
+    &nbsp;·&nbsp; <span style="font-weight:700; background:linear-gradient(135deg,var(--lime),var(--lime-dark)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">v1.0.1</span>
+    &nbsp;·&nbsp; Patch: Boarding Pass, Laporan PD, Contoh Dokumen SPD
+  </div>
 </body>
 </html>
