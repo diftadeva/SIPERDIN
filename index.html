@@ -722,7 +722,7 @@
         const kegiatan = gv(item,'kegiatan','Kegiatan');
         const tujuan   = gv(item,'tujuan','Tujuan');
         const hari     = gv(item,'jumlahHari','Jumlah Hari');
-        let statusBaru = gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan';
+        let statusBaru = String(gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan');
         let nominal    = gv(item,'nominalAdmin','Nominal','Nominal Klaim') || '-';
 
         let catatanRevisi = '';
@@ -796,9 +796,9 @@
         return;
       }
       const filtered = _allAdminData.filter(item => {
-        const nama = (gv(item,'namaLengkap','Nama Pegawai','searchName')).toLowerCase();
-        const jabatan = (gv(item,'jabatan','Jabatan')).toLowerCase();
-        const kegiatan = (gv(item,'kegiatan','Kegiatan')).toLowerCase();
+        const nama = String(gv(item,'namaLengkap','Nama Pegawai') || '').toLowerCase();
+        const jabatan = String(gv(item,'jabatan','Jabatan') || '').toLowerCase();
+        const kegiatan = String(gv(item,'kegiatan','Kegiatan') || '').toLowerCase();
         return nama.includes(q) || jabatan.includes(q) || kegiatan.includes(q);
       });
       renderAdminTable(filtered);
@@ -847,7 +847,7 @@
         if(linkBP)  links += `<a href="${linkBP}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block; margin-bottom:0.2rem;"><i class="fa-solid fa-ticket"></i> Lihat Boarding Pass</a>`;
         if(linkLpd) links += `<a href="${linkLpd}" target="_blank" style="color:#7c3aed; font-size:0.8rem; display:block;"><i class="fa-solid fa-file-lines"></i> Lihat Laporan PD</a>`;
 
-        let currStat = gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan';
+        let currStat = String(gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan');
         let catatanTersimpan = '';
         if(currStat.includes('||')) {
           const parts = currStat.split('||');
@@ -985,7 +985,7 @@
         renderDashboard(_allDashData);
       } catch(e) {
         document.getElementById('loadingDiv').style.display = 'none';
-        Swal.fire('Error', 'Gagal memuat data dashboard.', 'error');
+        Swal.fire('Error', 'Gagal memuat data dashboard: ' + e.message, 'error');
       }
     }
 
@@ -993,8 +993,8 @@
       const q = keyword.trim().toLowerCase();
       if(!q) { renderDashboard(_allDashData); return; }
       const filtered = _allDashData.filter(item => {
-        const nama = gv(item,'namaLengkap','Nama Pegawai','searchName').toLowerCase();
-        const kegiatan = gv(item,'kegiatan','Kegiatan').toLowerCase();
+        const nama = String(gv(item,'namaLengkap','Nama Pegawai','searchName') || '').toLowerCase();
+        const kegiatan = String(gv(item,'kegiatan','Kegiatan') || '').toLowerCase();
         return nama.includes(q) || kegiatan.includes(q);
       });
       renderDashboard(filtered);
@@ -1011,9 +1011,9 @@
 
       // Ringkasan statistik
       const total = data.length;
-      const selesai = data.filter(i => (gv(i,'statusKlaim','Status Klaim')||'').includes('Selesai')).length;
-      const proses  = data.filter(i => !(gv(i,'statusKlaim','Status Klaim')||'').includes('Selesai') && !(gv(i,'statusKlaim','Status Klaim')||'').toLowerCase().includes('revisi')).length;
-      const revisi  = data.filter(i => (gv(i,'statusKlaim','Status Klaim')||'').toLowerCase().includes('revisi')).length;
+      const selesai = data.filter(i => String(gv(i,'statusKlaim','Status Klaim')||'').includes('Selesai')).length;
+      const proses  = data.filter(i => !String(gv(i,'statusKlaim','Status Klaim')||'').includes('Selesai') && !String(gv(i,'statusKlaim','Status Klaim')||'').toLowerCase().includes('revisi')).length;
+      const revisi  = data.filter(i => String(gv(i,'statusKlaim','Status Klaim')||'').toLowerCase().includes('revisi')).length;
 
       let html = `
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0.75rem; margin-bottom:1.5rem;">
