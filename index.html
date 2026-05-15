@@ -674,7 +674,7 @@
           const q = nama.toLowerCase();
           
           const filteredData = allData.filter(item => {
-             const namaPegawai = (item.namaLengkap || "").toLowerCase();
+             const namaPegawai = String(item.namaLengkap || "").toLowerCase();
              return namaPegawai.includes(q);
           });
           
@@ -1045,7 +1045,7 @@
         let tgl = '-';
         for(const ts of tsCand){ const d=new Date(ts); if(!isNaN(d)){ tgl=d.toLocaleDateString('id-ID'); break; } }
 
-        let rawStat = gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan';
+        let rawStat = String(gv(item,'statusKlaim','Status Klaim') || 'PJ Keuangan');
         let stat = rawStat.includes('||') ? rawStat.split('||')[0].trim() : rawStat;
         const isRevisi = stat.toLowerCase().includes('revisi');
         const isDone   = stat === 'Selesai';
